@@ -1,0 +1,12 @@
+{
+  "name": "Cactus",
+  "displayName": "Cactus",
+  "expo": {
+    "name": "Cactus",
+    "slug": "Cactus",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
