@@ -1,22 +1,26 @@
-// evaluator.ts
+// Evaluator.ts
 
 import * as tf from '@tensorflow/tfjs';
-import { Alert } from 'react-native';
-import { Config } from './communications';
+import { loadModel } from './ModelHandler';
+import { ReceiveConfig, processSendConfig, SendConfig } from './Config';
+import { initializeTf } from './TensorflowHandler';
 
-export const evaluate = async (
-  model: tf.LayersModel,
-  inputs: tf.Tensor,
-  outputs: tf.Tensor,
-  config: Config
-): Promise<number> => {
+export const runEvaluation = async (
+  receiveConfig: ReceiveConfig,
+): Promise<SendConfig> => {
+
+  await initializeTf();
+  const model = await loadModel(receiveConfig);
+  const inputTensor = tf.tensor2d(receiveConfig.inputs, receiveConfig.inputShape);
+  const outputTensor = tf.tensor2d(receiveConfig.outputs, receiveConfig.outputShape);
+
   try {
     if (!model.loss) {
-      throw new Error('Model is not compiled. Please ensure the model is loaded and compiled correctly.');
+      throw new Error('Please ensure the model is loaded and compiled correctly.');
     }
 
-    const batchSize = config['batch_size'];
-    const numSamples = inputs.shape[0];
+    const batchSize = receiveConfig.batchSize;
+    const numSamples = inputTensor.shape[0];
     const numBatches = Math.ceil(numSamples / batchSize);
     let totalLoss = 0;
 
@@ -25,8 +29,8 @@ export const evaluate = async (
       const start = batch * batchSize;
       const end = Math.min(start + batchSize, numSamples);
       
-      const batchInputs = inputs.slice([start, 0], [end - start, -1]);
-      const batchOutputs = outputs.slice([start, 0], [end - start, -1]);
+      const batchInputs = inputTensor.slice([start, 0], [end - start, -1]);
+      const batchOutputs = outputTensor.slice([start, 0], [end - start, -1]);
 
       // Calculate loss for this batch
       const lossValue = tf.tidy(() => {
@@ -41,17 +45,16 @@ export const evaluate = async (
       batchInputs.dispose();
       batchOutputs.dispose();
 
-      await tf.nextFrame(); // Allow UI updates
     }
 
     // Calculate average loss
     const averageLoss = totalLoss / numSamples;
     console.log(`Evaluation Loss: ${averageLoss.toFixed(4)}`);
+    const sendConfig = await processSendConfig(model, averageLoss);
 
-    return averageLoss;
+    return sendConfig;
   } catch (error) {
     console.error('Error during evaluation:', error);
-    Alert.alert('Error', 'Failed to evaluate the model.');
     throw error;
   }
 };

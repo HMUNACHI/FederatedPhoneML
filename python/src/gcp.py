@@ -6,8 +6,12 @@ from typing import Dict, List
 
 from google.cloud import storage
 
-BUCKET_NAME = os.environ["BUCKET_NAME"]
-VESSEL_NAME = os.environ.get("VESSEL_NAME", "")
+
+credentials_path = "./gcp_credentials.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+
+BUCKET_NAME = "cactus-training"
+VESSEL_NAME = "mvp"
 
 CORS_CONFIG = [{"origin": ["*"], "method": ["GET"], "maxAgeSeconds": 3600}]
 
@@ -21,7 +25,6 @@ def upload_file(bucket: storage.Bucket, file_path: str, blob_name: str) -> stora
     """Uploads a single file to the specified GCS bucket."""
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(file_path)
-    # print(f"Uploaded {file_path} to gs://{BUCKET_NAME}/{blob_name}")
     return blob
 
 
@@ -46,7 +49,6 @@ def modify_model_json(model_json_path: str, signed_urls: Dict[str, str]) -> str:
                     signed_urls.get(os.path.basename(path), path)
                     for path in manifest["paths"]
                 ]
-                #print("Updated weightsManifest with signed URLs.")
     else:
         print("weightsManifest not found in model.json.")
 
@@ -63,7 +65,6 @@ def set_bucket_cors(bucket: storage.Bucket, cors_config: List[Dict]) -> None:
     """Sets the CORS configuration for the GCS bucket."""
     bucket.cors = cors_config
     bucket.update()
-    # print(f"Set CORS policies for bucket {bucket.name}.")
 
 
 def upload_to_gcs_and_get_signed_urls(temp_dir: str) -> Dict[str, str]:
@@ -101,7 +102,7 @@ def upload_to_gcs_and_get_signed_urls(temp_dir: str) -> Dict[str, str]:
             except Exception as e:
                 print(f"Error uploading {file}: {e}")
 
-    model_json_filename = "model.json"
+    model_json_filename = "model"
     model_json_path = os.path.join(temp_dir, model_json_filename)
 
     if os.path.exists(model_json_path):
@@ -118,7 +119,6 @@ def upload_to_gcs_and_get_signed_urls(temp_dir: str) -> Dict[str, str]:
             model_json_url = generate_signed_url(modified_blob)
             signed_urls[model_json_filename] = model_json_url
             os.remove(modified_model_json_path)
-            # print(f"Removed temporary file {modified_model_json_path}.")
         except Exception as e:
             print(f"Error processing {model_json_filename}: {e}")
     else:

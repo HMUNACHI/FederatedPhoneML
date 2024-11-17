@@ -1,25 +1,22 @@
-// modelHandler.ts
+// ModelHandler.ts
 
 import * as tf from '@tensorflow/tfjs';
-import { Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetch } from '@tensorflow/tfjs-react-native';
-import { createLossFunction } from './losses';
-import { createOptimizer } from './optimizers';
-import { Config } from './communications';
+import { createLossFunction } from './Losses';
+import { createOptimizer } from './Optimizers';
+import { ReceiveConfig } from './Config';
 
-const MODEL_STORAGE_KEY = '@my_model';
+export const loadModel = async (receiveConfig: ReceiveConfig): Promise<tf.LayersModel> => {
+  try { 
+    const modelJsonUrl = receiveConfig.modelUrl;
+    const weightsMap = receiveConfig.weights;
 
-export const loadModel = async (config: Config): Promise<tf.LayersModel> => {
-  try {
-    const modelJsonUrl = config['model.json'];
-    const weightsUrl = config['group1-shard1of1.bin'];
-
-    const weightUrlConverter = (weightFileName: string) => {
-      if (weightFileName === 'group1-shard1of1.bin') {
-        return weightsUrl;
+    const weightUrlConverter = (weightFileName: string): string => {
+      const weightUrl = weightsMap[weightFileName];
+      if (weightUrl) {
+        return weightUrl;
       }
-      return weightFileName;
+      throw new Error(`"${weightFileName}" not found in receiveConfig.weights.`);
     };
 
     const loadedModel = await tf.loadLayersModel(modelJsonUrl, {
@@ -40,42 +37,14 @@ export const loadModel = async (config: Config): Promise<tf.LayersModel> => {
       });
       console.log('Model compiled with extracted optimizer and loss function.');
     } else {
-      console.warn('Optimizer or loss function information not found in model.json');
+      console.warn('Optimizer or loss function information not found in model');
     }
 
     console.log('Model loaded from signed URL and compiled.');
-    Alert.alert('Success', 'Model loaded and compiled successfully.');
     return loadedModel;
 
   } catch (error) {
     console.error('Error loading the model:', error);
-    throw error;
-  }
-};
-
-
-export const saveModel = async (model: tf.LayersModel): Promise<void> => {
-  try {
-    const saveResult = await model.save(
-      tf.io.withSaveHandler(async (artifacts) => {
-        const modelString = JSON.stringify(artifacts);
-        await AsyncStorage.setItem(MODEL_STORAGE_KEY, modelString);
-        console.log('Model saved to AsyncStorage.');
-        return {
-          modelArtifactsInfo: {
-            dateSaved: new Date().toISOString(),
-            modelTopologyType: 'LayersModel',
-            weightDataBytes: artifacts.weightData.byteLength,
-            weightSpecsLength: artifacts.weightSpecs.length,
-          },
-        };
-      })
-    );
-
-    console.log('Model artifacts saved:', saveResult);
-  } catch (error) {
-    console.error('Error saving the model:', error);
-    Alert.alert('Error', 'Failed to save the model.');
     throw error;
   }
 };

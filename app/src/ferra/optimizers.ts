@@ -1,4 +1,4 @@
-// optimizers.ts
+// Optimizers.ts
 
 import * as tf from '@tensorflow/tfjs';
 

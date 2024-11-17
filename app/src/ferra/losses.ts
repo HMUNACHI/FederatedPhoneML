@@ -1,4 +1,4 @@
-// losses.ts
+// Losses.ts
 
 import * as tf from '@tensorflow/tfjs';
 

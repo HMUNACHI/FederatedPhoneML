@@ -15,7 +15,6 @@ class Trainer:
         model: keras.Model,
         inputs: np.ndarray,
         outputs: np.ndarray,
-        # epochs: int,
         batch_size: int,
         validation_inputs: Optional[np.ndarray] = None,
         validation_outputs: Optional[np.ndarray] = None,
@@ -25,23 +24,22 @@ class Trainer:
         self.device_urls = None
         self.batch_size = batch_size
         self.x = (inputs, outputs)
-        # self._get_available_devices()
-        # self.device_datasets = split_dataset(inputs, outputs, self.num_devices)
+        self._get_available_devices()
+        self.device_datasets = split_dataset(inputs, outputs, self.num_devices)
 
-        # self.base_config = {
-        #     "epochs": 10,
-        #     "batch_size": batch_size,
-        #     "local_epochs": 5,
-        # }
+        self.base_config = {
+            "epochs": 10,
+            "batch_size": batch_size,
+            "local_epochs": 5,
+        }
 
-        # self.device_configs = create_device_configs(
-        #     model, self.base_config, self.device_datasets
-        # )
-        # self.validation_inputs = validation_inputs
-        # self.validation_outputs = validation_outputs
+        self.device_configs = create_device_configs(
+            model, self.base_config, self.device_datasets
+        )
+        self.validation_inputs = validation_inputs
+        self.validation_outputs = validation_outputs
 
-        # self.history = {"train_loss": [], "device_losses": [], "val_loss": []}
-
+        self.history = {"train_loss": [], "device_losses": [], "val_loss": []}
         print("Training on 4 devices")
 
     def _get_available_devices(self) -> None:
@@ -138,64 +136,63 @@ class Trainer:
             return None
 
     def fit(self, epochs):
-        return self.model.fit(self.x[0], self.x[1], epochs=epochs, batch_size=self.batch_size)
-        # """Run federated training process"""
-        # self._get_available_devices()
+        """Run federated training process"""
+        self._get_available_devices()
 
-        # for epoch in range(self.epochs):
-        #     print(f"Global Epoch {epoch + 1}/{self.epochs}")
-        #     all_weights = []
-        #     epoch_device_losses = []
+        for epoch in range(epochs):
+            print(f"Global Epoch {epoch + 1}/{epochs}")
+            all_weights = []
+            epoch_device_losses = []
 
-        #     # Train on each device
-        #     for device_id, (device_url, device_config) in enumerate(
-        #         zip(self.device_urls, self.device_configs)
-        #     ):
-        #         print(f"Training on device {device_id + 1}/{self.num_devices}")
-        #         is_initial = epoch == 0
-        #         weights, loss = self._train_device(
-        #             device_url, device_config, is_initial
-        #         )
+            # Train on each device
+            for device_id, (device_url, device_config) in enumerate(
+                zip(self.device_urls, self.device_configs)
+            ):
+                print(f"Training on device {device_id + 1}/{self.num_devices}")
+                is_initial = epoch == 0
+                weights, loss = self._train_device(
+                    device_url, device_config, is_initial
+                )
 
-        #         if weights is not None:
-        #             all_weights.append(weights)
-        #             if loss is not None:
-        #                 epoch_device_losses.append((loss, len(device_config["inputs"])))
+                if weights is not None:
+                    all_weights.append(weights)
+                    if loss is not None:
+                        epoch_device_losses.append((loss, len(device_config["inputs"])))
 
-        #     # Average weights if we got results from any devices
-        #     if all_weights:
-        #         averaged_weights = self.average_model_weights(all_weights)
-        #         self.model.set_weights(averaged_weights)
+            # Average weights if we got results from any devices
+            if all_weights:
+                averaged_weights = self.average_model_weights(all_weights)
+                self.model.set_weights(averaged_weights)
 
-        #         # Calculate and store average training loss
-        #         if epoch_device_losses:
-        #             total_samples = sum(samples for _, samples in epoch_device_losses)
-        #             avg_train_loss = (
-        #                 sum(loss * samples for loss, samples in epoch_device_losses)
-        #                 / total_samples
-        #             )
-        #             self.history["train_loss"].append(avg_train_loss)
-        #             self.history["device_losses"].append(
-        #                 [loss for loss, _ in epoch_device_losses]
-        #             )
-        #             print(f"Average training loss: {avg_train_loss:.4f}")
+                # Calculate and store average training loss
+                if epoch_device_losses:
+                    total_samples = sum(samples for _, samples in epoch_device_losses)
+                    avg_train_loss = (
+                        sum(loss * samples for loss, samples in epoch_device_losses)
+                        / total_samples
+                    )
+                    self.history["train_loss"].append(avg_train_loss)
+                    self.history["device_losses"].append(
+                        [loss for loss, _ in epoch_device_losses]
+                    )
+                    print(f"Average training loss: {avg_train_loss:.4f}")
 
-        #         # Validate if validation data is provided
-        #         if (
-        #             self.validation_inputs is not None
-        #             and self.validation_outputs is not None
-        #         ):
-        #             val_loss = self.evaluate(
-        #                 self.validation_inputs, self.validation_outputs
-        #             )
-        #             self.history["val_loss"].append(val_loss)
-        #             print(f"Validation loss: {val_loss:.4f}")
-        #     else:
-        #         print("Warning: No weights received from any devices")
-        #         self.history["train_loss"].append(float("inf"))
-        #         self.history["device_losses"].append([])
-        #         if self.validation_inputs is not None:
-        #             self.history["val_loss"].append(float("inf"))
+                # Validate if validation data is provided
+                if (
+                    self.validation_inputs is not None
+                    and self.validation_outputs is not None
+                ):
+                    val_loss = self.evaluate(
+                        self.validation_inputs, self.validation_outputs
+                    )
+                    self.history["val_loss"].append(val_loss)
+                    print(f"Validation loss: {val_loss:.4f}")
+            else:
+                print("Warning: No weights received from any devices")
+                self.history["train_loss"].append(float("inf"))
+                self.history["device_losses"].append([])
+                if self.validation_inputs is not None:
+                    self.history["val_loss"].append(float("inf"))
 
     def evaluate(
         self,
