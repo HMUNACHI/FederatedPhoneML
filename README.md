@@ -3,7 +3,9 @@
 </p>
 
 # Systems Overview
-loading...
+<p align="center">
+  <img src="assets/mvpOverview.png" alt="Alt text"/>
+</p>
 
 # Systems Design
 loading...
