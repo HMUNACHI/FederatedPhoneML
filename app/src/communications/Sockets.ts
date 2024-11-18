@@ -44,3 +44,41 @@ export const updateRowByIdAndColumn = async (
       throw err;
     }
   };
+
+  export const insertNewRowAndGetId = async (): Promise<string | null> => {
+    try {
+      // Get the current user from Supabase auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('Error fetching user ID:', authError);
+        return null;
+      }
+  
+      const userId = user.id;
+  
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .insert([{
+          user_id: userId,
+          timestamp: new Date().toISOString(),
+          device_status: 'active', 
+          device_pulse_timestamp: new Date().toISOString().slice(0, 19).replace('T', ' ') // Timestamp without timezone
+        }])
+        .select('id')
+        .single();
+  
+      if (error) {
+        console.error('Error inserting row:', error);
+        return null;
+      }
+  
+      console.log('Inserted row ID:', data.id);
+      return data.id;
+    } catch (err) {
+      console.error('Unexpected error inserting row:', err);
+      return null;
+    }
+  };
+  
+  
+  

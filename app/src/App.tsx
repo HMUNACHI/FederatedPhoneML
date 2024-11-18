@@ -1,38 +1,62 @@
 import { isAvailable, train, evaluate, predict } from './ferra';
-import React, { useState } from 'react';
-import { View, Button, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Button } from 'react-native';
 import { listenToTrainingMessages } from './communications/Sockets';
+import { supabase } from './communications/Supabase';
+import { AuthPage } from './auth/AuthPage';
+import { insertNewRowAndGetId } from './communications/Sockets';
 
 const App: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null); // State to store the saved ID
 
-  const toggleListener = () => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data?.session);
+    };
+
+    checkAuth();
+
+    const { data: authSubscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsLoggedIn(!!session);
+      }
+    );
+
+    // Cleanup function to unsubscribe from the auth state listener
+    return () => {
+      authSubscription?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const toggleListener = async () => {
     if (isListening) {
-      // Turn off the listener
       if (unsubscribe) {
         unsubscribe();
         setUnsubscribe(null);
       }
       setIsListening(false);
     } else {
-      // Turn on the listener
+      // Call the insertRowAndGetId function and save the returned ID
+      const id = await insertNewRowAndGetId();
+      if (id) {
+        console.log('Saved ID:', id);
+        setSavedId(id); // Save the ID to state
+      }
+
       const unsubscribeFn = listenToTrainingMessages(async (payload) => {
         console.log('Real-time update:', payload);
-  
-        // Handle updates for specific columns
         const updatedColumns = Object.keys(payload.new || {}).filter(
           (key) => payload.new[key] !== payload.old[key]
         );
-  
-        // Define a mapping of column names to their handlers
         const columnHandlers: Record<string, (config: any) => Promise<any>> = {
           train_request: train,
           evaluate_request: evaluate,
           predict_request: predict,
         };
-  
-        // Process each updated column
         for (const column of updatedColumns) {
           const handler = columnHandlers[column];
           if (handler) {
@@ -48,12 +72,15 @@ const App: React.FC = () => {
           }
         }
       });
-  
+
       setUnsubscribe(() => unsubscribeFn);
       setIsListening(true);
     }
   };
-  
+
+  if (!isLoggedIn) {
+    return <AuthPage />;
+  }
 
   return (
     <View
@@ -67,6 +94,7 @@ const App: React.FC = () => {
         title={isListening ? 'Turn Off Listener' : 'Turn On Listener'}
         onPress={toggleListener}
       />
+      {savedId && <p>Saved Row ID: {savedId}</p>} {/* Display the saved ID */}
     </View>
   );
 };
