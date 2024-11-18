@@ -1,8 +1,6 @@
 <p align="center">
   <img src="assets/logoLarge.png" alt="Alt text"/>
 </p>
-
-# Systems Overview
 <p align="center">
   <img src="assets/mvpOverview.png" alt="Alt text"/>
 </p>
