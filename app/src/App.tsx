@@ -16,18 +16,39 @@ const App: React.FC = () => {
         setUnsubscribe(null);
       }
       setIsListening(false);
-      Alert.alert('Listener turned off');
     } else {
       // Turn on the listener
       const unsubscribeFn = listenToTrainingMessages((payload) => {
         console.log('Real-time update:', payload);
-        Alert.alert('Update Received', JSON.stringify(payload));
+  
+        // Handle updates for specific columns
+        const updatedColumns = Object.keys(payload.new || {}).filter(
+          (key) => payload.new[key] !== payload.old[key]
+        );
+  
+        updatedColumns.forEach((column) => {
+          switch (column) {
+            case 'train_request':
+              console.log('Training request changed:', payload.new.train_request);
+              break;
+            case 'evaluate_request':
+              console.log('Evaluate request changed:', payload.new.evaluate_request);
+              break;
+            case 'predict_request':
+              console.log('Predict request changed:', payload.new.predict_request);
+              break;
+            default:
+              console.log(`Other column changed: ${column}`);
+              break;
+          }
+        });
       });
+  
       setUnsubscribe(() => unsubscribeFn);
       setIsListening(true);
-      Alert.alert('Listener turned on');
     }
   };
+  
 
   return (
     <View
