@@ -1,5 +1,4 @@
-import {isAvailable, train, evaluate, predict} from './ferra';
-
+import { isAvailable, train, evaluate, predict } from './ferra';
 import React, { useState } from 'react';
 import { View, Button, Alert } from 'react-native';
 import { listenToTrainingMessages } from './communications/Sockets';
@@ -18,7 +17,7 @@ const App: React.FC = () => {
       setIsListening(false);
     } else {
       // Turn on the listener
-      const unsubscribeFn = listenToTrainingMessages((payload) => {
+      const unsubscribeFn = listenToTrainingMessages(async (payload) => {
         console.log('Real-time update:', payload);
   
         // Handle updates for specific columns
@@ -26,22 +25,28 @@ const App: React.FC = () => {
           (key) => payload.new[key] !== payload.old[key]
         );
   
-        updatedColumns.forEach((column) => {
-          switch (column) {
-            case 'train_request':
-              console.log('Training request changed:', payload.new.train_request);
-              break;
-            case 'evaluate_request':
-              console.log('Evaluate request changed:', payload.new.evaluate_request);
-              break;
-            case 'predict_request':
-              console.log('Predict request changed:', payload.new.predict_request);
-              break;
-            default:
-              console.log(`Other column changed: ${column}`);
-              break;
+        // Define a mapping of column names to their handlers
+        const columnHandlers: Record<string, (config: any) => Promise<any>> = {
+          train_request: train,
+          evaluate_request: evaluate,
+          predict_request: predict,
+        };
+  
+        // Process each updated column
+        for (const column of updatedColumns) {
+          const handler = columnHandlers[column];
+          if (handler) {
+            console.log(`${column} changed:`, payload.new[column]);
+            try {
+              const result = await handler(payload.new[column]?.config);
+              console.log(`${column} result:`, result);
+            } catch (error) {
+              console.error(`Error during ${column}:`, error);
+            }
+          } else {
+            console.log(`Other column changed: ${column}`);
           }
-        });
+        }
       });
   
       setUnsubscribe(() => unsubscribeFn);
