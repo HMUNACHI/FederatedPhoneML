@@ -4,6 +4,15 @@
     "strict": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "allowJs": true
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true, // Skips type checking for declaration files (improves performance)
+    "noImplicitAny": true, // Ensures all variables are typed
+    "strictNullChecks": true, // Disallows null/undefined unless explicitly allowed
+    "moduleResolution": "node", // Node-style module resolution
+    "baseUrl": ".", // Allows for absolute imports if needed
+    "paths": {
+      "@/*": ["src/*"] // Simplifies import paths (optional)
+    }
   }
 }

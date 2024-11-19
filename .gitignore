@@ -166,3 +166,5 @@ cython_debug/
 
 .DS_Store
 .expo
+android
+ios
