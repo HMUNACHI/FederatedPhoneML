@@ -23,7 +23,7 @@ const App = () => {
     
     return cleanup;
   }, []);
-  
+
   return (
     <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ThemeProvider theme={styledTheme}>

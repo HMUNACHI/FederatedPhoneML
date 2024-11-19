@@ -5,6 +5,7 @@ import theme from '../../styles/theme';
 // Styled Container
 const StyledContainer = styled.View`
   width: 100%;
+  height: auto;
   margin: ${theme.spacing * 2}px 0;
 `;
 
@@ -12,20 +13,22 @@ const StyledContainer = styled.View`
 const StyledInput = styled.TextInput<{ isFocused: boolean }>`
   width: 100%;
   border-color: ${({ isFocused }) =>
-    isFocused ? theme.colors.primary : theme.colors.text};
+    isFocused ? theme.colors.primary : theme.colors.textDefault};
   border-width: ${({ isFocused }) => (isFocused ? '1px' : '0.5px')};
   border-radius: ${theme.roundness}px;
-  padding: 10px;
-  color: ${theme.colors.text};
+  padding: 25px;
+  color: ${theme.colors.textDefault};
   background-color: ${theme.colors.surface};
+  text-transform: none;
 `;
 
-const StyledTextField = ({ value, onChangeText, placeholder }: any) => {
+const StyledTextField = ({ value, onChangeText, placeholder='placeholder', secureTextEntry=false }: any) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <StyledContainer>
       <StyledInput
+        secureTextEntry={secureTextEntry}
         isFocused={isFocused}
         value={value}
         onChangeText={onChangeText}
@@ -33,6 +36,7 @@ const StyledTextField = ({ value, onChangeText, placeholder }: any) => {
         placeholderTextColor={theme.colors.secondary}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
+        autoCapitalize="none"
       />
     </StyledContainer>
   );
