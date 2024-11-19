@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
-import LoginScreen from './components/Login';
+import { SafeAreaView } from 'react-native';
+import { styledTheme } from './styles/theme';
+import { ThemeProvider } from 'styled-components/native';
+import LoginScreen from './components/LoginScreen';
+import HomePage from './components/HomePage';
+import theme from './styles/theme';
+
 import { checkSession, onAuthStateChange, handleLogout } from './components/Outh';
 
 const App = () => {
@@ -18,30 +23,14 @@ const App = () => {
     
     return cleanup;
   }, []);
-
-  if (!isLoggedIn) {
-    return <LoginScreen />;
-  }
-
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Welcome to the App!</Text>
-      <Button title="Logout" onPress={handleLogout} />
-    </View>
+    <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ThemeProvider theme={styledTheme}>
+            {isLoggedIn ? <HomePage/> : <LoginScreen />}
+        </ThemeProvider>
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  text: {
-    fontSize: 24,
-    color: '#333',
-  },
-});
 
 export default App;
