@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { Button } from 'react-native';
+import SectionBreak from './primary/SectionBreak';
 import { Image } from 'react-native';
-import CactusLogo from "../assets/images/logo_light_grey_no_glow.png"
+import CactusLogo from "../assets/images/logo_light_grey.png"
 import StyledTextField from './primary/TextField';
 import Typography from './primary/Typography';
 import CustomButton from './primary/Button';
@@ -45,6 +45,7 @@ const LoginScreen: React.FC = () => {
         onChangeText={setPassword}
       />
       <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth}>Sign in</CustomButton>
+      <SectionBreak>or</SectionBreak>
     </StyledAuthView>
   );
 };

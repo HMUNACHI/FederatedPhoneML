@@ -5,7 +5,7 @@ import { Image } from 'react-native';
 import { View } from "react-native";
 import TrainToggle from "./primary/TrainToggle";
 import { Text } from "react-native";
-import CactusLogo from "../assets/images/logo_light_grey_no_glow.png"
+import CactusLogo from "../assets/images/logo_light_grey.png"
 
 const MainContent = styled.View`
   flex: 1;
