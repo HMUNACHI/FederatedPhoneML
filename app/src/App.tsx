@@ -7,9 +7,11 @@ import {
   handleLogout,
 } from './components/Outh';
 import { HomeStyles } from './styles/Style';
+import { joinNetwork, leaveNetwork } from './communications/Sockets';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [deviceActive, setDeviceActive] = useState(false);
 
   useEffect(() => {
     const initSession = async () => {
@@ -26,6 +28,15 @@ const App = () => {
     return cleanup;
   }, []);
 
+  const toggleDeviceStatus = () => {
+    if (!deviceActive) {
+      joinNetwork();
+    } else {
+      leaveNetwork();
+    }
+    setDeviceActive((prevState) => !prevState);
+  };
+
   if (!isLoggedIn) {
     return <LoginScreen />;
   }
@@ -34,6 +45,15 @@ const App = () => {
     <View style={HomeStyles.container}>
       <Text style={HomeStyles.text}>Welcome to the App!</Text>
       <Button title="Logout" onPress={handleLogout} />
+      <Button
+        title={deviceActive ? 'Leave Network' : 'Join Network'}
+        onPress={toggleDeviceStatus}
+      />
+      <Text style={HomeStyles.text}>
+        {deviceActive
+          ? 'You have joined the network!'
+          : 'You are not part of the network.'}
+      </Text>
     </View>
   );
 };
