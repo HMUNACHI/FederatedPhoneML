@@ -4,6 +4,11 @@
     "strict": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "allowJs": true
-  }
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@env": ["declarations.d.ts"]
+    }
+  },
+  "include": ["declarations.d.ts", "src/**/*"]
 }
