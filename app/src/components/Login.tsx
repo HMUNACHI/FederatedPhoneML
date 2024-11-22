@@ -11,7 +11,7 @@ const LoginScreen = () => {
     try {
       await handleLogin(email, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      console.error(error.message)
     }
   };
 
