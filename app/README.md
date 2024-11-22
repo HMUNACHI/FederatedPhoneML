@@ -164,7 +164,7 @@ interface SendConfig {
    - Search for **"Editor: Format On Save"** in the Settings and check the box.
 
 ### Step 3: Prettier Configuration in Project
-Make sure you have a `.prettierrc` file in your project root (already included in this project). The configuration for this project is:
+Make sure you have a `.prettierrc` file in your project root. The configuration for this project is:
 
 ```json
 {
