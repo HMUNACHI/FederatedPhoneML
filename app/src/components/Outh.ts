@@ -6,9 +6,11 @@ export const checkSession = async (): Promise<boolean> => {
 };
 
 export const onAuthStateChange = (callback: (isLoggedIn: boolean) => void) => {
-  const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(!!session);
-  });
+  const { data: authListener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      callback(!!session);
+    }
+  );
 
   return () => {
     authListener.subscription.unsubscribe();
@@ -24,13 +26,19 @@ export const handleLogout = async () => {
   }
 };
 
-export const handleLogin = async (email: string, password: string): Promise<void> => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      throw new Error(error.message || 'Login failed');
+export const handleLogin = async (
+  email: string,
+  password: string
+): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      throw error;
     }
+  } catch (error: any) {
+    throw new Error(error.message || 'Login failed');
+  }
 };

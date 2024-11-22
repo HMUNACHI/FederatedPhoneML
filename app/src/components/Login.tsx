@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, Alert } from 'react-native';
 import { handleLogin } from './Outh';
+import { AuthStyles } from 'src/styles/Style';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -15,10 +16,10 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <View style={AuthStyles.container}>
+      <Text style={AuthStyles.title}>Login</Text>
       <TextInput
-        style={styles.input}
+        style={AuthStyles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
@@ -26,7 +27,7 @@ const LoginScreen = () => {
         autoCapitalize="none"
       />
       <TextInput
-        style={styles.input}
+        style={AuthStyles.input}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
@@ -36,28 +37,5 @@ const LoginScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 16,
-    paddingHorizontal: 8,
-  },
-});
 
 export default LoginScreen;
