@@ -154,11 +154,11 @@ interface SendConfig {
 
 ### Step 1: Install Prettier Extension
 1. Open VS Code.
-2. Go to the Extensions view by pressing `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (Mac).
+2. Go to the Extensions
 3. Search for **"Prettier - Code formatter"** and click **Install**.
 
 ### Step 2: Configure Prettier in VS Code
-1. Open your **Settings** by pressing `Ctrl+,` (Windows/Linux) or `Cmd+,` (Mac).
+1. Open your **Settings**.
 2. Search for **"Default Formatter"** and set it to `esbenp.prettier-vscode`.
 3. Enable format on save:
    - Search for **"Editor: Format On Save"** in the Settings and check the box.

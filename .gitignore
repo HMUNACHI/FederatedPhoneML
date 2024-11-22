@@ -166,3 +166,4 @@ cython_debug/
 
 .env
 app/.expo
+.prettierrc
