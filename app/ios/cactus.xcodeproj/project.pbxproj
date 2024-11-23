@@ -314,6 +314,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+				CODE_SIGN_ENTITLEMENTS = cactus/cactus.entitlements;
 			};
 			name = Debug;
 		};
@@ -336,6 +337,7 @@
 				PRODUCT_NAME = cactus;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+				CODE_SIGN_ENTITLEMENTS = cactus/cactus.entitlements;
 			};
 			name = Release;
 		};

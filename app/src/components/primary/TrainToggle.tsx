@@ -1,10 +1,12 @@
 import React from "react"
 import { View, Text, Switch } from "react-native"
 import { useTheme } from "styled-components"
+
 interface TrainToggleProps {
     isTraining: boolean;
     handleTrainToggle: () => void;
 }
+
 const TrainToggle: React.FC<TrainToggleProps> = ({isTraining, handleTrainToggle }) => {
     const theme = useTheme();
     return (
@@ -38,4 +40,5 @@ const TrainToggle: React.FC<TrainToggleProps> = ({isTraining, handleTrainToggle 
         </View>
     )
 }
+
 export default TrainToggle

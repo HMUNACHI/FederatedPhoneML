@@ -7,6 +7,14 @@
     "version": "1.0.0",
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7e086f19-c37d-4a4e-ba43-7e59fbc312ee"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.rshemet.Cactus"
+    }
   }
 }
