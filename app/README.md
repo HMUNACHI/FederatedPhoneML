@@ -149,3 +149,28 @@ interface SendConfig {
 - Model size impacts load time
 - Battery usage during training
 - Network latency handling
+
+## Prettier Setup
+
+### Step 1: Install Prettier Extension
+1. Open VS Code.
+2. Go to the Extensions
+3. Search for **"Prettier - Code formatter"** and click **Install**.
+
+### Step 2: Configure Prettier in VS Code
+1. Open your **Settings**.
+2. Search for **"Default Formatter"** and set it to `esbenp.prettier-vscode`.
+3. Enable format on save:
+   - Search for **"Editor: Format On Save"** in the Settings and check the box.
+
+### Step 3: Prettier Configuration in Project
+Make sure you have a `.prettierrc` file in your project root. The configuration for this project is:
+
+```json
+{
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "printWidth": 80
+}
