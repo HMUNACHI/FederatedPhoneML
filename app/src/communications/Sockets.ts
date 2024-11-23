@@ -62,9 +62,8 @@ const handleTrainingMessageUpdate = async (payload: any) => {
     for (const column of updatedColumns) {
       const handler = columnHandlers[column];
       if (handler) {
-        console.log(`${column} changed:`, payload.new[column]);
         try {
-          const result = await handler(payload.new[column]?.config);
+          const result = await handler(payload.new[column]);
           console.log(`${column} result:`, result);
         } catch (error) {
           console.error(`Error during ${column}:`, error);
