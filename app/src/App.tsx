@@ -18,8 +18,8 @@ const App = () => {
 
   useEffect(() => {
     const initSession = async () => {
-      const isLoggedIn = await checkSession();
-      setIsLoggedIn(isLoggedIn);
+      const isLoggedInA = await checkSession();
+      setIsLoggedIn(isLoggedInA);
     };
 
     initSession();
@@ -35,6 +35,7 @@ const App = () => {
     <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ThemeProvider theme={styledTheme}>
             {isLoggedIn ? <HomePage/> : <LoginScreen />}
+            {/* <HomePage/> */}
         </ThemeProvider>
     </SafeAreaView>
   );
