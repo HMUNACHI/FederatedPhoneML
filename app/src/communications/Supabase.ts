@@ -13,7 +13,6 @@ export const listenToTrainingMessages = (
       'postgres_changes',
       { event: '*', schema: 'public', table: tableName },
       (payload) => {
-        console.log('Change received!', payload);
         onUpdateCallback(payload);
       }
     )
