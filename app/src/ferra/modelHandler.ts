@@ -3,7 +3,7 @@
 import * as tf from '@tensorflow/tfjs';
 import { fetch } from '@tensorflow/tfjs-react-native';
 import { createLossFunction } from './Losses';
-import { createOptimizer } from './Optimizers';
+import { createOptimizer } from './optimizers';
 import { ReceiveConfig } from './Config';
 
 export const loadModel = async (receiveConfig: ReceiveConfig): Promise<tf.LayersModel> => {
