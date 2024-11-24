@@ -4,11 +4,12 @@ import { useTheme } from "styled-components"
 
 interface TrainToggleProps {
     isTraining: boolean;
+    loading: boolean;
     handleTrainToggle: () => void;
 }
 
-const TrainToggle: React.FC<TrainToggleProps> = ({isTraining, handleTrainToggle }) => {
-    const theme = useTheme();
+const TrainToggle: React.FC<TrainToggleProps> = ({loading, isTraining, handleTrainToggle }) => {
+const theme = useTheme();
     return (
         <View style={{ flexDirection: 'column', alignItems: 'center' }}>
             <Switch
@@ -20,6 +21,7 @@ const TrainToggle: React.FC<TrainToggleProps> = ({isTraining, handleTrainToggle 
                     shadowRadius: isTraining ? 1 : null, // Blur radius
                     elevation: isTraining ? 0 : null, // Android elevation for shadow
                 }}
+                disabled={loading}
                 onValueChange={handleTrainToggle}
                 trackColor={{isTraining: theme.colors.text, true: theme.colors.success}}
                 thumbColor={theme.colors.text}
