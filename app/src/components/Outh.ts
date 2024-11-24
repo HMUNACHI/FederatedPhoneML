@@ -51,17 +51,12 @@ const registerDeviceWithSupabase = async () => {
 
     // Step 3. only register this device if there's no device record for this user yet
     if (deviceData && deviceData.length === 0) {
-      const { error: insertError } = await supabase.from('devices').insert([
-        {
+      await insertRow('devices', {
           user_id: user_id,
           status: 'available',
           last_updated: new Date(),
         },
-      ]);
-
-      if (insertError) {
-        throw insertError;
-      }
+      );
     }
   } catch (err) {
     console.error('Error registering device with Supabase:', err);
