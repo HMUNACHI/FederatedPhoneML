@@ -1,4 +1,5 @@
 import { supabase, insertRow } from '../communications/Supabase';
+import { leaveNetwork } from '../communications/Sockets';
 
 export const checkSession = async (): Promise<boolean> => {
   const { data } = await supabase.auth.getSession();

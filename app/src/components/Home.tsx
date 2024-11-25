@@ -1,26 +1,20 @@
 import React, { useEffect, useState } from "react"
-import styled from 'styled-components/native';
 import theme from "../styles/theme";
+
 import { Image } from 'react-native';
 import { View } from "react-native";
-import TrainToggle from "./primary/TrainToggle";
 import { Text } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
+
+import { MainContent } from "../styles/Style";
+import TrainToggle from "./primary/TrainToggle";
+import CustomButton from "./primary/Button";
 import CactusLogo from "../assets/images/logo_light_grey.png"
 
-import { joinNetwork, leaveNetwork } from '../communications/Sockets';
-
+import { joinNetwork, leaveNetwork } from "../communications/Sockets";
 import { handleLogout } from "./Outh";
 import { fetchDeviceAvailability, toggleDeviceAvailability } from "../communications/Supabase";
-import CustomButton from "./primary/Button";
 
-const MainContent = styled.View`
-  flex: 1;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  margin-top: 0px;
-  background: ${theme.colors.background};
-`;
 
 const HomePage: React.FC = () => {
     const [loadingAvailability, setLoadingAvailability] = useState(true);
@@ -30,6 +24,12 @@ const HomePage: React.FC = () => {
         const availability = deviceActive ? 'available' : 'unavailable'
         toggleDeviceAvailability(availability).then((newAvailability) => {
             setDeviceActive(newAvailability === 'available')
+            switch (newAvailability) {
+                case 'available':
+                    joinNetwork();
+                case 'unavailable':
+                    leaveNetwork();
+            }
         })
     };
 
@@ -37,6 +37,7 @@ const HomePage: React.FC = () => {
         fetchDeviceAvailability().then((availability) => {
             setLoadingAvailability(false)
             setDeviceActive(availability === 'available')
+            if (availability === 'available'){joinNetwork()}
         })
     }, [])
 
@@ -45,11 +46,10 @@ const HomePage: React.FC = () => {
             <View>
             <Image source={CactusLogo} style={{height: 120, width: 120}}/>
             </View>
-            {/* <TrainToggle isTraining={deviceActive} handleTrainToggle={toggleDeviceStatus}/> */}
-            <TrainToggle loading={loadingAvailability} isTraining={deviceActive} handleTrainToggle={toggleDeviceStatus}/>
+            {loadingAvailability ? <ActivityIndicator color={theme.colors.primary} size='large'/> : <TrainToggle isTraining={deviceActive} handleTrainToggle={toggleDeviceStatus}/>}
             {/* <EarningsCard earnings={133.71}/> */}
             <Text/>
-            <CustomButton onPress={handleLogout}>Logout</CustomButton>
+            <CustomButton onPress={handleLogout}>Sign out</CustomButton>
         </MainContent>
     )
 }
