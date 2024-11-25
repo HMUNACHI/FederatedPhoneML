@@ -32,7 +32,6 @@ export async function fetchDeviceAvailability(): Promise<string>{
       return latestAvailability[0].status
     }
   }
-  return 'x'
 }
 
 export async function toggleDeviceAvailability( currentAvailability:string ): Promise<string | void>{
