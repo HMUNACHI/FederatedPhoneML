@@ -16,3 +16,10 @@ trainer = Trainer(
 )
 trainer.fit(epochs=10)
 ```
+
+
+# Device Connector
+
+1. Make sure app is up and connected to the network
+2. Set .env in /python with db url and service role api key
+3. Run deviceConnector.py
