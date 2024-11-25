@@ -9,7 +9,13 @@ let unsubscribeFromUpdates: (() => void) | null = null;
 
 const TABLE_NAME = 'training_messages';
 
+const DEVICE_STATUS_COLUMN = 'device_status';
+
+const DEVICE_PULSE_COLUMN = 'device_pulse';
+
 let sessionId: null | string;
+
+let intervalId: NodeJS.Timeout | null = null;
 
 const columnHandlers: Record<string, (config: any) => Promise<any>> = {
   training_request: train,
@@ -49,6 +55,14 @@ export async function joinNetwork() {
       sessionId
     );
     console.log('Successfully joined the network.');
+
+    intervalId = setInterval(async () => {
+      try {
+        pollTable();
+      } catch (error) {
+        console.error('Error during periodic function execution:', error);
+      }
+    }, 10000);
   } catch (error) {
     console.error('Error during listenToTrainingMessages setup:', error);
   }
@@ -68,6 +82,35 @@ export function leaveNetwork() {
   } catch (error) {
     console.error('Error during unsubscribeFromUpdates:', error);
   }
+  updateTableOnDeviceLeaving();
+}
+
+function updateTableOnDeviceLeaving() {
+  if (sessionId == null) {
+    console.warn('No device session!');
+    return;
+  }
+
+  updateRowByIdAndColumn(
+    sessionId,
+    DEVICE_STATUS_COLUMN,
+    'inactive',
+    TABLE_NAME
+  );
+}
+
+function pollTable() {
+  if (sessionId == null) {
+    console.warn('No device session!');
+    return;
+  }
+
+  updateRowByIdAndColumn(
+    sessionId,
+    DEVICE_PULSE_COLUMN,
+    new Date().toISOString(),
+    TABLE_NAME
+  );
 }
 
 const handleTrainingMessageUpdate = async (payload: any) => {
