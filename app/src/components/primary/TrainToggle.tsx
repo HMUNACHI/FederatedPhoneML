@@ -8,7 +8,7 @@ interface TrainToggleProps {
 }
 
 const TrainToggle: React.FC<TrainToggleProps> = ({isTraining, handleTrainToggle }) => {
-    const theme = useTheme();
+const theme = useTheme();
     return (
         <View style={{ flexDirection: 'column', alignItems: 'center' }}>
             <Switch

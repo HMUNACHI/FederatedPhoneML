@@ -1,4 +1,6 @@
 import { StyleSheet } from 'react-native';
+import styled from 'styled-components/native';
+import theme from './theme';
 
 export const HomeStyles = StyleSheet.create({
   container: {
@@ -35,3 +37,13 @@ export const AuthStyles = StyleSheet.create({
     paddingHorizontal: 8,
   },
 });
+
+
+export const MainContent = styled.View`
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-top: 0px;
+  background: ${theme.colors.background};
+`;

@@ -1,4 +1,5 @@
-import { supabase } from '../communications/Supabase';
+import { supabase, insertRow } from '../communications/Supabase';
+import { registerDeviceWithSupabase } from '../communications/Supabase';
 
 export const checkSession = async (): Promise<boolean> => {
   const { data } = await supabase.auth.getSession();
@@ -37,6 +38,8 @@ export const handleLogin = async (
     });
     if (error) {
       throw error;
+    } else {
+      registerDeviceWithSupabase()
     }
   } catch (error: any) {
     throw new Error(error.message || 'Login failed');
