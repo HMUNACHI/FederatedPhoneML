@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, Button } from 'react-native';
+import { SafeAreaView } from 'react-native';
+import { styledTheme } from './styles/theme';
+import { ThemeProvider } from 'styled-components/native';
 import LoginScreen from './components/Login';
+import HomePage from './components/Home';
 import {
   checkSession,
   onAuthStateChange,
-  handleLogout,
+  // handleLogout,
 } from './components/Outh';
-import { HomeStyles } from './styles/Style';
-import { joinNetwork, leaveNetwork } from './communications/Sockets';
+
+import theme from './styles/theme';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [deviceActive, setDeviceActive] = useState(false);
+  
 
   useEffect(() => {
     const initSession = async () => {
-      const isLoggedIn = await checkSession();
-      setIsLoggedIn(isLoggedIn);
+      const isLoggedInA = await checkSession();
+      setIsLoggedIn(isLoggedInA);
     };
 
     initSession();
@@ -28,33 +31,13 @@ const App = () => {
     return cleanup;
   }, []);
 
-  const toggleDeviceStatus = () => {
-    if (!deviceActive) {
-      joinNetwork();
-    } else {
-      leaveNetwork();
-    }
-    setDeviceActive((prevState) => !prevState);
-  };
-
-  if (!isLoggedIn) {
-    return <LoginScreen />;
-  }
-
   return (
-    <View style={HomeStyles.container}>
-      <Text style={HomeStyles.text}>Welcome to the App!</Text>
-      <Button title="Logout" onPress={handleLogout} />
-      <Button
-        title={deviceActive ? 'Leave Network' : 'Join Network'}
-        onPress={toggleDeviceStatus}
-      />
-      <Text style={HomeStyles.text}>
-        {deviceActive
-          ? 'You have joined the network!'
-          : 'You are not part of the network.'}
-      </Text>
-    </View>
+    <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ThemeProvider theme={styledTheme}>
+            {isLoggedIn ? <HomePage/> : <LoginScreen />}
+            {/* <HomePage/> */}
+        </ThemeProvider>
+    </SafeAreaView>
   );
 };
 
