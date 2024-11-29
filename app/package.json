@@ -20,7 +20,7 @@
     "expo-screen-orientation": "~4.3.0",
     "react": "18.0.0",
     "react-dom": "18.0.0",
-    "react-native": "0.69.9",
+    "react-native": "0.69.3",
     "react-native-dotenv": "^3.4.11",
     "react-native-fs": "2.14.1",
     "react-native-paper": "^5.12.5",
