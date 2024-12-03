@@ -1,12 +1,20 @@
 {
-  "name": "Cactus",
-  "displayName": "Cactus",
   "expo": {
     "name": "Cactus",
+    "icon": "src/assets/images/appstore1024.png",
     "slug": "Cactus",
     "version": "1.0.0",
+    "sdkVersion": "51.0.0",
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7e086f19-c37d-4a4e-ba43-7e59fbc312ee"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.rshemet.Cactus"
+    }
   }
 }
