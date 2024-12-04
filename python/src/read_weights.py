@@ -4,7 +4,7 @@ import io
 import os
 
 import numpy as np
-from cactus.quantization import dequantize_weights
+from src.quantization import dequantize_weights
 
 _INPUT_DTYPES = [np.float16, np.float32, np.int32, np.complex64,
                  np.uint8, np.uint16, object, bool]

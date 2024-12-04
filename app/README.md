@@ -24,8 +24,6 @@ TensorFlow.js-powered machine learning framework for React Native, enabling dist
 │       ├── Prediction.ts     # Inference handling (Henry)
 │       ├── Training.ts       # Training implementation (Henry)
 │       └── index.ts          # Framework entry point (Henry)
-├── ios/                      # iOS specific files
-├── android/                  # Android specific files
 ├── **tests**/                # Test files
 └── package.json              # Project dependencies
 ```

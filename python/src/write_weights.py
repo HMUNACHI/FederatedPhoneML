@@ -6,8 +6,8 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from cactus.quantization import map_layers_to_quantization_dtype, quantize_weights
-from cactus.read_weights import STRING_LENGTH_DTYPE
+from src.quantization import map_layers_to_quantization_dtype, quantize_weights
+from src.read_weights import STRING_LENGTH_DTYPE
 
 _OUTPUT_DTYPES = [np.float16, np.float32, np.int32, np.complex64,
                   np.uint8, np.uint16, bool, object]

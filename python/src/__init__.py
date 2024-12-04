@@ -1,2 +1,2 @@
-from cactus.trainer import Trainer
+from src.trainer import Trainer
 import tf_keras as keras

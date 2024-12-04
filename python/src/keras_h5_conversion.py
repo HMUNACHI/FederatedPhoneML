@@ -12,8 +12,8 @@ import six
 import h5py
 import numpy as np
 
-from cactus.write_weights import write_weights 
-from cactus.common import *
+from src.write_weights import write_weights 
+from src.common import *
 
 
 def normalize_weight_name(weight_name):
@@ -440,6 +440,7 @@ def save_keras_model(model, artifacts_dir, quantization_dtype_map=None,
   """
   temp_h5_path = tempfile.mktemp() + '.h5'
   model.save(temp_h5_path)
+  print(topology_json)
   topology_json, weight_groups = (
       h5_merged_saved_model_to_tfjs_format(temp_h5_path))
   if os.path.isfile(artifacts_dir):
@@ -452,3 +453,17 @@ def save_keras_model(model, artifacts_dir, quantization_dtype_map=None,
       weight_shard_size_bytes=weight_shard_size_bytes,
       metadata=metadata)
   os.remove(temp_h5_path)
+
+import tf_keras as keras
+
+model = keras.Sequential([
+    keras.layers.Dense(64, activation='relu', input_shape=(100,)),
+    keras.layers.Dense(10, activation='softmax')
+])
+
+# Compile the model
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+save_keras_model(model, 'model_artifactse')
