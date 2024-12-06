@@ -14,8 +14,8 @@ import theme from './styles/theme';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginInProgress, setLoginInProgress] = useState(false);
   
-
   useEffect(() => {
     const initSession = async () => {
       const restored = await restoreSession();
@@ -45,7 +45,7 @@ const App = () => {
   return (
     <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ThemeProvider theme={styledTheme}>
-            {isLoggedIn ? <HomePage/> : <LoginScreen />}
+            {(isLoggedIn && !loginInProgress) ? <HomePage/> : <LoginScreen setLoginInProgress={setLoginInProgress} />}
             {/* <HomePage/> */}
         </ThemeProvider>
     </SafeAreaView>
