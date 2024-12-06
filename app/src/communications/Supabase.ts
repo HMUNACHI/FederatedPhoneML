@@ -69,7 +69,8 @@ export const Heartbeat = ({ deviceActive }: { deviceActive: boolean }) => {
     let intervalId: NodeJS.Timeout | null = null;
 
     if (deviceActive) {
-      intervalId = setInterval(() => {
+      setDeviceAvailability('available'); // set availability immediately
+      intervalId = setInterval(() => { // ..and set a recurring heartbeat each 45sec
         setDeviceAvailability('available');
       }, 45000);
     }
