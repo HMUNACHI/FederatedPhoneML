@@ -34,6 +34,7 @@ const App = () => {
   
       if (isLoggedIn && session) {
         await saveSession(session);
+        setLoginInProgress(false);
       } else if (!isLoggedIn) {
         await clearSession();
       }
