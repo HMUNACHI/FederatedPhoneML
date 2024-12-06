@@ -51,13 +51,13 @@ export async function fetchDeviceAvailability(): Promise<string | void>{
 
 export async function setDeviceAvailability ( deviceAvailability:string ): Promise<boolean>{
   // returns success boolean
-  const session = await AsyncStorage.getItem('user_session');
-  if (session){
-    const parsedSession = JSON.parse(session);
+  console.log(`Changing device availability to ${deviceAvailability}`);
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (!sessionError){
     const { data, error } = await supabase
       .from('devices')
       .update({ status: deviceAvailability, last_updated: new Date() })
-      .eq('user_id', parsedSession?.user.id); 
+      .eq('user_id', sessionData.session?.user.id); 
       if (error){
          error;
       }
