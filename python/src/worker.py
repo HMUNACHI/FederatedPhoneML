@@ -6,11 +6,8 @@ from typing import List, Optional, Dict
 from supabase import create_client, Client
 from realtime._async.client import AsyncRealtimeClient
 
-from dotenv import load_dotenv
-load_dotenv('../app/.env')
-
-SUPABASE_URL = os.environ['EXPO_PUBLIC_SUPABASE_URL']
-SUPABASE_ANON_KEY = os.environ['EXPO_PUBLIC_SUPABASE_ANON_KEY']
+SUPABASE_URL = os.environ['SUPABASE_URL']
+SUPABASE_ANON_KEY = os.environ['SUPABASE_ANON_KEY']
 
 supabase : Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
