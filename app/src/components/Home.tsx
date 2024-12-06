@@ -13,7 +13,7 @@ import CactusLogo from "../assets/images/logo_light_grey.png"
 
 import { joinNetwork, leaveNetwork } from "../communications/Sockets";
 import { handleLogout } from "./Outh";
-import { fetchDeviceAvailability, toggleDeviceAvailability } from "../communications/Supabase";
+import { fetchDeviceAvailability, setDeviceAvailability } from "../communications/Supabase";
 
 
 const HomePage: React.FC = () => {
@@ -21,15 +21,18 @@ const HomePage: React.FC = () => {
     const [deviceActive, setDeviceActive] = useState(false);
 
     const toggleDeviceStatus = () => {
-        const availability = deviceActive ? 'available' : 'unavailable'
-        toggleDeviceAvailability(availability).then((newAvailability) => {
-            setDeviceActive(newAvailability === 'available')
-            switch (newAvailability) {
-                case 'available':
-                    joinNetwork();
-                case 'unavailable':
-                    leaveNetwork();
+        const newAvailability = deviceActive ? 'unavailable' : 'available'
+        setDeviceAvailability(newAvailability).then((success) => {
+            if (success){
+                setDeviceActive(newAvailability === 'available')
+                switch (newAvailability) {
+                    case 'available':
+                        joinNetwork();
+                    case 'unavailable':
+                        leaveNetwork();
+                }
             }
+            else{console.log('unable to update device availability!')}
         })
     };
 

@@ -46,21 +46,21 @@ export async function fetchDeviceAvailability(): Promise<string | void>{
   }
 }
 
-export async function toggleDeviceAvailability( currentAvailability:string ): Promise<string | void>{
-  console.log(`Received toggle request from ${currentAvailability} status`)
-  const newAvailability = currentAvailability === 'available' ? 'unavailable' : 'available';
+export async function setDeviceAvailability ( deviceAvailability:string ): Promise<boolean>{
+  // returns success boolean
+  console.log(`Changing device availability to ${deviceAvailability}`);
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (!sessionError){
-      const { data, error } = await supabase
+    const { data, error } = await supabase
       .from('devices')
-      .update({ status: newAvailability, last_updated: new Date() })
+      .update({ status: deviceAvailability, last_updated: new Date() })
       .eq('user_id', sessionData.session?.user.id); 
-      if (error) {
-      throw error;
+      if (error){
+         error;
       }
-      console.log(`Toggling to ${newAvailability}`)
-      return newAvailability
+    return true;
   }
+  return false;
 }
 
 export const registerDeviceWithSupabase = async () => {
