@@ -13,7 +13,7 @@ import CactusLogo from "../assets/images/logo_light_grey.png"
 
 import { joinNetwork, leaveNetwork } from "../communications/Sockets";
 import { handleLogout } from "./Outh";
-import { fetchDeviceAvailability, setDeviceAvailability } from "../communications/Supabase";
+import { fetchDeviceAvailability, setDeviceAvailability, Heartbeat } from "../communications/Supabase";
 
 
 const HomePage: React.FC = () => {

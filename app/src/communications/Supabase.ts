@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { setCurrentDeviceID } from 'src/utils/CurrentDevice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -51,7 +50,6 @@ export async function fetchDeviceAvailability(): Promise<string | void>{
 
 export async function setDeviceAvailability ( deviceAvailability:string ): Promise<boolean>{
   // returns success boolean
-  console.log(`Changing device availability to ${deviceAvailability}`);
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (!sessionError){
     const { data, error } = await supabase
@@ -71,8 +69,7 @@ export const Heartbeat = ({ deviceActive }: { deviceActive: boolean }) => {
     let intervalId: NodeJS.Timeout | null = null;
 
     if (deviceActive) {
-      setDeviceAvailability('available'); // set availability immediately
-      intervalId = setInterval(() => { // ..and set a recurring heartbeat each 45sec
+      intervalId = setInterval(() => {
         setDeviceAvailability('available');
       }, 45000);
     }

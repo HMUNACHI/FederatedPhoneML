@@ -1,4 +1,4 @@
-import { supabase, insertRow, setDeviceAvailability } from "./Supabase";
+import { supabase, updateTableRows, setDeviceAvailability } from "./Supabase";
 import {isAvailable, train, evaluate, predict} from '../ferra'
 import { ReceiveConfig } from "../ferra/Config";
 
@@ -17,6 +17,7 @@ async function subscribeToRealtimeTable(
     callback: Function
   ): Promise<void> {
     getCurrentDeviceID().then((deviceId => {
+      console.log(`received device Id ${deviceId}`)
       const channelName = createRealtimeChannelName(table, deviceId)
       const channel = supabase
         .channel(channelName)
@@ -47,13 +48,15 @@ export function joinNetwork() {
         async (payload: object) => {
             const taskId = payload.new.id
             const task_type = payload.new.request_type
-            const requestConfig = payload.new.data
-            const responseData = await handleNewFerraTask(task_type, requestConfig);
-            await setDeviceAvailability('available');
-            insertRow(
-              'task_responses',
-              {id: taskId, data: responseData}
-            )
+            const requestConfig = payload.new.request_data
+            handleNewFerraTask(task_type, requestConfig).then((responseData) => {
+                updateTableRows(
+                    'tasks',
+                    {id: taskId},
+                    {response_data: responseData, response_sent: new Date()}
+                );
+                setDeviceAvailability('available');
+            })
         }
     )
 }
@@ -83,7 +86,9 @@ async function handleNewFerraTask(
     taskType: TaskType,
     requestData: ReceiveConfig
 ): Promise<object | void> {
-    await setDeviceAvailability('busy')
+    console.log('Interpreting Ferra request...')
+    setDeviceAvailability('busy')
+    return {weights: [1, 2], outputs: [[1.1, 2.2,], [3.3, 4.4]], loss: 0.5}
     switch (taskType){
         case TaskType.train:
             return await train(requestData)
