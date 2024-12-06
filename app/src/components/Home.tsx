@@ -13,7 +13,7 @@ import CactusLogo from "../assets/images/logo_light_grey.png"
 
 import { joinNetwork, leaveNetwork } from "../communications/Sockets";
 import { handleLogout } from "./Outh";
-import { fetchDeviceAvailability, setDeviceAvailability } from "../communications/Supabase";
+import { fetchDeviceAvailability, setDeviceAvailability, Heartbeat } from "../communications/Supabase";
 
 
 const HomePage: React.FC = () => {
@@ -50,7 +50,7 @@ const HomePage: React.FC = () => {
             <Image source={CactusLogo} style={{height: 120, width: 120}}/>
             </View>
             {loadingAvailability ? <ActivityIndicator color={theme.colors.primary} size='large'/> : <TrainToggle isTraining={deviceActive} handleTrainToggle={toggleDeviceStatus}/>}
-            {/* <EarningsCard earnings={133.71}/> */}
+            <Heartbeat deviceActive={deviceActive}/>
             <Text/>
             <CustomButton onPress={handleLogout}>Sign out</CustomButton>
         </MainContent>

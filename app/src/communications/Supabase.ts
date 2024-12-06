@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { setCurrentDeviceID } from 'src/utils/CurrentDevice';
 
 export const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -48,7 +50,6 @@ export async function fetchDeviceAvailability(): Promise<string | void>{
 
 export async function setDeviceAvailability ( deviceAvailability:string ): Promise<boolean>{
   // returns success boolean
-  console.log(`Changing device availability to ${deviceAvailability}`);
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (!sessionError){
     const { data, error } = await supabase
@@ -63,8 +64,33 @@ export async function setDeviceAvailability ( deviceAvailability:string ): Promi
   return false;
 }
 
-export const registerDeviceWithSupabase = async () => {
-  // https://www.notion.so/TODO-Engineering-reminders-148d8e920c9780fb8af0c558296e1bd2?pvs=4#148d8e920c9780cea520d862b57c2f1c
+export const Heartbeat = ({ deviceActive }: { deviceActive: boolean }) => {
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (deviceActive) {
+      intervalId = setInterval(() => {
+        setDeviceAvailability('available');
+      }, 45000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [deviceActive]);
+
+  return null; // we essentially treat this as a component but render nothing
+};
+
+export const registerOrRetrieveDeviceFromSupabase = async () => {
+  // Gets called on successful login.
+  // The goal is to either register the device for the user (if they're logging in for the first time) or
+  // retrieve device ID and set it to local storage
+
+  // one BIG assumption we're making is that each user can only have one device ID
+
   try {
     // Step 1: Get the user session
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -75,25 +101,36 @@ export const registerDeviceWithSupabase = async () => {
     if (!user_id) {
       throw new Error('User session is invalid or user ID is missing.');
     }
-    // Step 2: Check whether this user already has a registered device
-    const { data: deviceData, error: tableLoadError } = await supabase
-      .from('devices')
-      .select('id') 
-      .eq('user_id', user_id)
-      .limit(1); 
 
-    if (tableLoadError) {
-      throw tableLoadError;
+    // Step 2: Check whether this user already has a registered device
+    async function fetchDeviceId(): Promise<number> {
+      const { data: deviceData, error: tableLoadError } = await supabase
+        .from('devices')
+        .select('id') 
+        .eq('user_id', user_id)
+        .limit(1); 
+
+      if (tableLoadError) {
+        throw tableLoadError;
+      }
+      return deviceData[0]?.id
     }
 
-    // Step 3. only register this device if there's no device record for this user yet
-    if (deviceData && deviceData.length === 0) {
+    // Step 3. either set device ID or register this device if there's no device record for this user yet
+    const deviceId = await fetchDeviceId()
+    if (deviceId) {
+      console.log(`Device id loaded: ${deviceId}, saving to async storage`)
+      await setCurrentDeviceID(deviceId)
+    } else {
+      console.log(`Registering new device ID`)
       await insertRow('devices', {
           user_id: user_id,
           status: 'available',
           last_updated: new Date(),
-        },
-      );
+        }
+      )
+      const deviceId = await fetchDeviceId();
+      await setCurrentDeviceID(deviceId);
     }
   } catch (err) {
     console.error('Error registering device with Supabase:', err);
