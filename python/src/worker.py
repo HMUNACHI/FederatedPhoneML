@@ -1,12 +1,16 @@
 from dataclasses import dataclass, asdict
 import asyncio
+import os
 from typing import List, Optional, Dict
 
 from supabase import create_client, Client
 from realtime._async.client import AsyncRealtimeClient
 
-SUPABASE_URL = "https://qunrxbelodkkjibgrvnz.supabase.co"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bnJ4YmVsb2Rra2ppYmdydm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA1NTc1MTMsImV4cCI6MjA0NjEzMzUxM30.Mi-q2P2XwFS-2i_gMtx4khnN0cgVkA4pf7PbA5o0xIU"
+from dotenv import load_dotenv
+load_dotenv('../app/.env')
+
+SUPABASE_URL = os.environ['EXPO_PUBLIC_SUPABASE_URL']
+SUPABASE_ANON_KEY = os.environ['EXPO_PUBLIC_SUPABASE_ANON_KEY']
 
 supabase : Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
