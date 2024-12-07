@@ -4,10 +4,12 @@
   "version": "0.0.1",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "expo start"
+    "start": "expo start",
+    "build-local": "eas build --platform ios --local --profile preview"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-async-storage/async-storage": "^2.1.0",
+    "@supabase/supabase-js": "^2.46.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-react-native": "^1.0.0",
     "expo": "^51.0.0",
