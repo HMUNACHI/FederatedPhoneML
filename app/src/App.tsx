@@ -4,10 +4,10 @@ import { styledTheme } from './styles/theme';
 import { ThemeProvider } from 'styled-components/native';
 import LoginScreen from './components/Login';
 import HomePage from './components/Home';
+import { restoreSession, saveSession, clearSession } from './components/Outh';
 import {
   checkSession,
   onAuthStateChange,
-  // handleLogout,
 } from './components/Outh';
 
 import theme from './styles/theme';
@@ -18,16 +18,27 @@ const App = () => {
 
   useEffect(() => {
     const initSession = async () => {
-      const isLoggedInA = await checkSession();
-      setIsLoggedIn(isLoggedInA);
+      const restored = await restoreSession();
+      if (!restored) {
+        const isLoggedInA = await checkSession();
+        setIsLoggedIn(isLoggedInA);
+      } else {
+        setIsLoggedIn(true);
+      }
     };
-
+  
     initSession();
-
-    const cleanup = onAuthStateChange((isLoggedIn) =>
-      setIsLoggedIn(isLoggedIn)
-    );
-
+  
+    const cleanup = onAuthStateChange(async (isLoggedIn, session) => {
+      setIsLoggedIn(isLoggedIn);
+  
+      if (isLoggedIn && session) {
+        await saveSession(session);
+      } else if (!isLoggedIn) {
+        await clearSession();
+      }
+    });
+  
     return cleanup;
   }, []);
 
