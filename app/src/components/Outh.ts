@@ -1,6 +1,6 @@
-import { supabase, insertRow } from '../communications/Supabase';
+import { supabase } from '../communications/Supabase';
 import { Session } from '@supabase/supabase-js';
-import { registerDeviceWithSupabase } from '../communications/Supabase';
+import { registerOrRetrieveDeviceFromSupabase } from '../communications/Supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const checkSession = async (): Promise<boolean> => {
@@ -80,7 +80,8 @@ export const handleLogin = async (
     if (error) {
       throw error;
     } else {
-      registerDeviceWithSupabase()
+      // we should await, otherwise realtime subscription is faster than the device ID fetch and we try to listen to an undefied device ID
+      await registerOrRetrieveDeviceFromSupabase() 
     }
   } catch (error: any) {
     throw new Error(error.message || 'Login failed');
