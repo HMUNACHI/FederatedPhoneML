@@ -13,8 +13,8 @@ import {
 import theme from './styles/theme';
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginInProgress, setLoginInProgress] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [loginInProgress, setLoginInProgress] = useState<boolean>(false);
   
   useEffect(() => {
     const initSession = async () => {

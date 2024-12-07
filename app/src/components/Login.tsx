@@ -2,15 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { handleLogin } from './Outh';
 import SectionBreak from './primary/SectionBreak';
 import Typography from './primary/Typography';
-import { Image } from 'react-native';
+import { Image, View } from 'react-native';
 import CactusLogo from "../assets/images/logo_light_grey.png"
 import StyledTextInput from './primary/TextField';
 import CustomButton from './primary/Button';
+import { PlatformAuth } from './auth/PlatformAuth.native';
 
 import theme from '../styles/theme';
 import styled from 'styled-components/native';
 
-const LoginScreen = ({setLoginInProgress}) => {
+const LoginScreen = ({ setLoginInProgress }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -47,7 +48,10 @@ const LoginScreen = ({setLoginInProgress}) => {
         onChangeText={setPassword}
       />
       <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth}>Sign in</CustomButton>
-      <SectionBreak>or</SectionBreak>
+      <SectionBreak>or use</SectionBreak>
+      <View style={{flexDirection: 'row', gap: 10}}>
+        <PlatformAuth/>
+      </View>
     </StyledAuthView>
   );
 };

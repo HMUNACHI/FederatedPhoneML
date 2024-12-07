@@ -14,6 +14,7 @@
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-react-native": "^1.0.0",
     "expo": "^51.0.0",
+    "expo-apple-authentication": "~6.4.2",
     "expo-build-properties": "~0.12.5",
     "expo-camera": "~15.0.16",
     "expo-file-system": "~17.0.1",
