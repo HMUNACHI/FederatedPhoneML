@@ -11,6 +11,8 @@ trainer = Trainer(
     model,
     inputs,
     outputs,
-    batch_size=2,
+    batch_size=3,
+    validation_inputs=[[5], [6], [7], [8]],
+    validation_outputs=[[11], [13], [15], [17]],
 )
-trainer.fit(epochs=2)
+trainer.fit(epochs=3)

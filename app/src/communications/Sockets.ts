@@ -89,7 +89,6 @@ async function handleNewFerraTask(
 ): Promise<object | void> {
     console.log('Interpreting Ferra request...')
     setDeviceAvailability('busy')
-    return {weights: [1, 2], outputs: [[1.1, 2.2,], [3.3, 4.4]], loss: 0.5}
     switch (taskType){
         case TaskType.train:
             return await train(requestData)

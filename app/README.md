@@ -107,7 +107,7 @@ Just use ferra as shown above, do not modify the codes.
 #### ReceiveConfig
 ```typescript
 interface ReceiveConfig {
-  modelUrl: string;                 // Model URL
+  modelJson: string;                 // Model URL
   weights: [shardFileName: string]; // Model weights
   batchSize: number;                // Micro-batch size
   inputs: number[][];               // Input data

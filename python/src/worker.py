@@ -1,33 +1,37 @@
 import asyncio
+import os
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
+from dotenv import load_dotenv
 from realtime._async.client import AsyncRealtimeClient
 from supabase import Client, create_client
 
-SUPABASE_URL = 
-SUPABASE_ANON_KEY = 
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 
 @dataclass
 class RequestConfig:
-    model_url: str  # Model URL
-    weights: List[float]  # Model weights
-    batch_size: int  # Micro-batch size
-    inputs: List[List[float]] = None  # Input data
-    input_shape: List[int] = None  # Input tensor shape
-    outputs: Optional[List[List[float]]] = None  # Output data (optional)
-    output_shape: Optional[List[int]] = None  # Output tensor shape (optional)
-    epochs: Optional[int] = None  # Training epochs (optional)
-    datasets_per_device: Optional[int] = None  # Device batch size (optional)
+    modelJson: str
+    weights: List[float]
+    batchSize: int
+    inputs: List[List[float]] = None
+    inputShape: List[int] = None
+    outputs: Optional[List[List[float]]] = None
+    outputShape: Optional[List[int]] = None
+    epochs: Optional[int] = None
+    datasetsPerDevice: Optional[int] = None
 
 
 @dataclass
 class ResponseConfig:
-    weights: List[List[float]]  # Updated weights
-    outputs: Optional[List[List[float]]]  # Predictions (optional)
-    loss: float  # Loss value
+    weights: List[List[float]]
+    outputs: Optional[List[List[float]]]
+    loss: float
 
 
 @dataclass
@@ -89,14 +93,6 @@ class Worker:
     def __init__(self, _id):
         self.id = _id
         self.task_manager = TaskManager()
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.create_task(self.listen_for_task_completion())
-        else:
-            loop.create_task(self.listen_for_task_completion())
 
     @property
     def available_devices(self) -> List[int]:
@@ -105,6 +101,10 @@ class Worker:
                 supabase.table("devices")
                 .select("id")
                 .eq("status", "available")
+                .gte(
+                    "last_updated",
+                    (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
+                )
                 .execute()
             )
             devices = [device["id"] for device in response.data]

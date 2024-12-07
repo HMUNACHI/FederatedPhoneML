@@ -4,7 +4,7 @@ import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-react-native';
 
 export interface ReceiveConfig {
-  modelUrl: string;  
+  modelJson: JSON;  
   weights: { [shardFileName: string]: string };
   batchSize: number;
   inputs: number[][];
@@ -66,8 +66,6 @@ export async function processSendConfig(
 
       // Add outputs to SendConfig
       sendConfig.outputs = outputData;
-    } else {
-      console.warn('No model outputs provided. Skipping output processing.');
     }
 
     return sendConfig;

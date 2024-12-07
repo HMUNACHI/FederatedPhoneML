@@ -1,3 +1,4 @@
+import asyncio
 import time
 from collections import defaultdict
 from typing import List, Optional, Tuple
@@ -12,6 +13,8 @@ from .worker import RequestConfig, Worker
 
 
 class Trainer:
+    """Distributed training by using federated training class"""
+
     def __init__(
         self,
         model: keras.Model,
@@ -32,16 +35,12 @@ class Trainer:
         self.validation_outputs = validation_outputs
         self.history = defaultdict(list)
 
-    def _get_model_json(self) -> str:
-        """Get model JSON string"""
-        return self.model.to_json()
-
     def _create_base_request_config(self, epochs=None) -> RequestConfig:
         """Create base request configuration"""
         return RequestConfig(
-            model_url=get_keras_model_graph(self.model),
+            modelJson=get_keras_model_graph(self.model),
             weights=self._get_weights(),
-            batch_size=self.batch_size,
+            batchSize=self.batch_size,
             epochs=epochs,
         )
 
@@ -57,7 +56,7 @@ class Trainer:
         """Convert nested lists back to numpy arrays"""
         return [np.array(w) for w in weights_data]
 
-    def _dispatch(
+    async def _dispatch(
         self,
         request_config: RequestConfig,
         datasets: List[Tuple[int, np.ndarray, np.ndarray]],
@@ -70,9 +69,9 @@ class Trainer:
             request_config.outputs = (
                 device_outputs.tolist() if device_outputs is not None else None
             )
-            request_config.input_shape = list(device_inputs.shape)
-            request_config.output_shape = list(device_outputs.shape)
-            request_config.datasets_per_device = len(device_inputs)
+            request_config.inputShape = list(device_inputs.shape)
+            request_config.outputShape = list(device_outputs.shape)
+            request_config.datasetsPerDevice = len(device_inputs)
 
             self.worker.send_task(
                 device_id=device, request_type=request_type, request_data=request_config
@@ -85,27 +84,22 @@ class Trainer:
         all_weights = []
         epoch_device_losses = []
         outputs = []
-        start_time = time.time()
-        timeout = 10  # seconds
 
-        while time.time() - start_time < timeout:
-            for task_id, task in list(self.worker.task_manager.tasks.items()):
-                if task.is_completed:
-                    if task.response_data.outputs is not None:
-                        outputs.append(task.response_data.outputs)
-                    if task.response_data.weights is not None:
-                        all_weights.append(task.response_data.weights)
-                    if task.response_data.loss is not None:
-                        epoch_device_losses.append(
-                            (
-                                task.response_data.loss, 
-                                len(task.request_data.datasets_per_device)
-                            )
+        for task_id, task in list(self.worker.task_manager.tasks.items()):
+            print(task.is_completed)
+            if task.is_completed:
+                if task.response_data.outputs is not None:
+                    outputs.append(task.response_data.outputs)
+                if task.response_data.weights is not None:
+                    all_weights.append(task.response_data.weights)
+                if task.response_data.loss is not None:
+                    epoch_device_losses.append(
+                        (
+                            task.response_data.loss,
+                            len(task.request_data.datasets_per_device),
                         )
-                    del self.worker.task_manager.tasks[task_id]
-            if not self.worker.task_manager.incomplete_tasks:
-                break
-            time.sleep(0.5)  # wait before checking again
+                    )
+                del self.worker.task_manager.tasks[task_id]
 
         if all_weights:
             averaged_weights = average_model_weights(all_weights)
@@ -117,30 +111,42 @@ class Trainer:
 
         return outputs
 
+    async def _dispatch_gather(self, request_config, datasets, request_type):
+        await self._dispatch(request_config, datasets, request_type)
+        return self._gather(request_type)
+
     def fit(self, epochs):
         """Run federated training process"""
         request_config = self._create_base_request_config(epochs)
-
-        datasets = split_datasets(
-            self.inputs,
-            self.worker.available_devices,
-            self.outputs,
-            include_outputs=True,
-        )
         print(f"Training on {len(self.worker.available_devices)} devices")
 
         for epoch in range(epochs):
             print(f"Global Epoch {epoch + 1}/{epochs}")
-            self._dispatch(request_config, datasets, "train")
-            _ = self._gather("train")
+
+            datasets = split_datasets(
+                self.inputs,
+                self.worker.available_devices,
+                self.batch_size,
+                self.outputs,
+                include_outputs=True,
+            )
+
+            try:
+                _ = asyncio.run(
+                    asyncio.wait_for(
+                        self._dispatch_gather(request_config, datasets, "fit"),
+                        timeout=10,
+                    )
+                )
+            except asyncio.TimeoutError:
+                print("Dispatch and gather operation timed out.")
+                continue  # Proceed to the next epoch or handle accordingly
 
             if (
                 self.validation_inputs is not None
                 and self.validation_outputs is not None
             ):
-                val_loss = self.evaluate()
-                self.history["val_loss"].append(val_loss)
-                print(f"Validation loss: {val_loss:.4f}")
+                _ = self.evaluate()
 
     def evaluate(self) -> None:
         """Run distributed evaluation across all devices"""
@@ -148,17 +154,16 @@ class Trainer:
 
         datasets = split_datasets(
             self.validation_inputs,
-            self.worker.available_devices(),
+            self.worker.available_devices,
+            self.batch_size,
             self.validation_outputs,
             include_outputs=True,
         )
 
-        self._dispatch(request_config, datasets, "evaluate")
-        _ = self._gather("evaluate")
+        _ = asyncio.run(self._dispatch_gather(request_config, datasets, "evaluate"))
 
     def predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
         """Run distributed prediction across all devices"""
         request_config = self._create_base_request_config()
-        datasets = split_datasets(inputs, self.worker.available_devices())
-        self._dispatch(request_config, datasets, "predict")
-        return self._gather("predict")
+        datasets = split_datasets(inputs, self.worker.available_devices(), self.batch_size)
+        return asyncio.run(self._dispatch_gather(request_config, datasets, "predict"))
