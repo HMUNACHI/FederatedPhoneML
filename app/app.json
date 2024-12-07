@@ -5,6 +5,7 @@
     "slug": "Cactus",
     "version": "1.0.0",
     "sdkVersion": "51.0.0",
+    "plugins": ["expo-apple-authentication"],
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -14,7 +15,8 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.rshemet.Cactus"
+      "bundleIdentifier": "com.rshemet.Cactus",
+      "usesAppleSignIn": true
     }
   }
 }
