@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { handleLogin } from './Outh';
 import SectionBreak from './primary/SectionBreak';
 import Typography from './primary/Typography';
@@ -10,7 +10,7 @@ import CustomButton from './primary/Button';
 import theme from '../styles/theme';
 import styled from 'styled-components/native';
 
-const LoginScreen = ({setLoginInProgress}) => {
+const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -19,15 +19,10 @@ const LoginScreen = ({setLoginInProgress}) => {
   const onLoginPress = async () => {
     try {
       await handleLogin(email, password);
-      setLoginInProgress(false)
     } catch (error: any) {
       console.log(error.message)
     }
   };
-
-  useEffect(() => {
-    setLoginInProgress(true)
-  }, [])
 
   return (
     <StyledAuthView>

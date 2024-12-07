@@ -4,49 +4,37 @@ import { styledTheme } from './styles/theme';
 import { ThemeProvider } from 'styled-components/native';
 import LoginScreen from './components/Login';
 import HomePage from './components/Home';
-import { restoreSession, saveSession, clearSession } from './components/Outh';
 import {
   checkSession,
   onAuthStateChange,
+  // handleLogout,
 } from './components/Outh';
 
 import theme from './styles/theme';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginInProgress, setLoginInProgress] = useState(false);
   
+
   useEffect(() => {
     const initSession = async () => {
-      const restored = await restoreSession();
-      if (!restored) {
-        const isLoggedInA = await checkSession();
-        setIsLoggedIn(isLoggedInA);
-      } else {
-        setIsLoggedIn(true);
-      }
+      const isLoggedInA = await checkSession();
+      setIsLoggedIn(isLoggedInA);
     };
-  
+
     initSession();
-  
-    const cleanup = onAuthStateChange(async (isLoggedIn, session) => {
-      setIsLoggedIn(isLoggedIn);
-  
-      if (isLoggedIn && session) {
-        await saveSession(session);
-        setLoginInProgress(false);
-      } else if (!isLoggedIn) {
-        await clearSession();
-      }
-    });
-  
+
+    const cleanup = onAuthStateChange((isLoggedIn) =>
+      setIsLoggedIn(isLoggedIn)
+    );
+
     return cleanup;
   }, []);
 
   return (
     <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ThemeProvider theme={styledTheme}>
-            {(isLoggedIn && !loginInProgress) ? <HomePage/> : <LoginScreen setLoginInProgress={setLoginInProgress} />}
+            {isLoggedIn ? <HomePage/> : <LoginScreen />}
             {/* <HomePage/> */}
         </ThemeProvider>
     </SafeAreaView>
