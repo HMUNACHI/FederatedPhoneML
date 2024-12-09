@@ -1,15 +1,20 @@
+import asyncio
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from collections import defaultdict
+from typing import List, Optional, Tuple
 
 import numpy as np
-import requests
-import tensorflow as tf
 import tf_keras as keras
 
-from cactus.utils import create_device_configs, split_dataset
+from .data import split_datasets
+from .federated import average_epoch_loss, average_model_weights
+from .keras_h5_conversion import get_keras_model_graph
+from .worker import RequestConfig, Worker
 
 
 class Trainer:
+    """Distributed training by using federated training class"""
+
     def __init__(
         self,
         model: keras.Model,
@@ -23,260 +28,146 @@ class Trainer:
         self.model = model
         self.device_urls = None
         self.batch_size = batch_size
-        self.x = (inputs, outputs)
-        self._get_available_devices()
-        self.device_datasets = split_dataset(inputs, outputs, self.num_devices)
-
-        self.base_config = {
-            "epochs": 10,
-            "batch_size": batch_size,
-            "local_epochs": 5,
-        }
-
-        self.device_configs = create_device_configs(
-            model, self.base_config, self.device_datasets
-        )
+        self.worker = Worker(0)
+        self.inputs = inputs
+        self.outputs = outputs
         self.validation_inputs = validation_inputs
         self.validation_outputs = validation_outputs
+        self.history = defaultdict(list)
 
-        self.history = {"train_loss": [], "device_losses": [], "val_loss": []}
-        print("Training on 4 devices")
+    def _create_base_request_config(self, epochs=None) -> RequestConfig:
+        """Create base request configuration"""
+        return RequestConfig(
+            modelJson=get_keras_model_graph(self.model),
+            weights=self._get_weights(),
+            batchSize=self.batch_size,
+            epochs=epochs,
+        )
 
-    def _get_available_devices(self) -> None:
-        """Dummy for now, will actually read from a database or API"""
-        device_urls = [
-            "http://192.168.1.101:3000",
-            "http://192.168.1.102:3000",
-            "http://192.168.1.103:3000",
-            "http://192.168.1.104:3000",
-        ]
-        self.device_urls = device_urls
-        self.num_devices = len(device_urls)
+    def _reset(self):
+        """Reset training job data"""
+        self.history = defaultdict(list)
 
-    def _serialize_weights(self, weights: List[np.ndarray]) -> List:
+    def _get_weights(self) -> List:
         """Convert numpy arrays to nested lists for JSON serialization"""
-        return [w.tolist() for w in weights]
+        return [w.tolist() for w in self.model.get_weights()]
 
     def _deserialize_weights(self, weights_data: List) -> List[np.ndarray]:
         """Convert nested lists back to numpy arrays"""
         return [np.array(w) for w in weights_data]
 
-    async def _train_device(
-        self, device_url: str, device_config: Dict, is_initial: bool
-    ) -> Tuple[Optional[List[np.ndarray]], Optional[float]]:
-        """Train on a single device and get weights and loss back"""
-        try:
-            current_weights = self._serialize_weights(self.model.get_weights())
+    def _to_validate(self):
+        """Check if validation data is available"""
+        return (
+            self.validation_inputs is not None and self.validation_outputs is not None
+        )
 
-            if is_initial:
-                response = requests.post(
-                    f"{device_url}/send-job",
-                    json=device_config,
-                    headers={"Content-Type": "application/json"},
-                )
-            else:
-                response = requests.post(
-                    f"{device_url}/get-weights",
-                    json={"weights": current_weights, "config": device_config},
-                    headers={"Content-Type": "application/json"},
-                )
-
-            response.raise_for_status()
-            data = response.json()
-            weights = self._deserialize_weights(data["weights"])
-            loss = data.get("loss")
-            return weights, loss
-
-        except requests.exceptions.RequestException as e:
-            print(f"Error training on device {device_url}: {e}")
-            return None, None
-
-    def _get_device_predictions(
-        self, device_url: str, inputs: np.ndarray, weights: List[np.ndarray]
-    ) -> Tuple[Optional[np.ndarray], Optional[float]]:
-        """Get predictions and losses from a device"""
-        try:
-            response = requests.post(
-                f"{device_url}/get-inference",
-                json={
-                    "inputs": inputs.tolist(),
-                    "weights": self._serialize_weights(weights),
-                },
-                headers={"Content-Type": "application/json"},
-            )
-            response.raise_for_status()
-            data = response.json()
-            return np.array(data["predictions"]), data.get("loss")
-        except requests.exceptions.RequestException as e:
-            print(f"Error getting predictions from {device_url}: {e}")
-            return None, None
-
-    def _get_device_evaluation(
+    async def _dispatch(
         self,
-        device_url: str,
-        inputs: np.ndarray,
-        outputs: np.ndarray,
-        weights: List[np.ndarray],
-    ) -> Optional[float]:
-        """Get evaluation metrics from a device"""
-        try:
-            response = requests.post(
-                f"{device_url}/evaluate",
-                json={
-                    "inputs": inputs.tolist(),
-                    "outputs": outputs.tolist(),
-                    "weights": self._serialize_weights(weights),
-                },
-                headers={"Content-Type": "application/json"},
+        request_config: RequestConfig,
+        datasets: List[Tuple[int, np.ndarray, np.ndarray]],
+        request_type: str,
+    ) -> None:
+        """Dispatch tasks to all available devices"""
+        request_configs = []
+
+        for device, device_inputs, device_outputs in datasets:
+
+            request_config.inputs = device_inputs.tolist()
+            request_config.outputs = (
+                device_outputs.tolist() if device_outputs is not None else None
             )
-            response.raise_for_status()
-            return response.json()["loss"]
-        except requests.exceptions.RequestException as e:
-            print(f"Error getting evaluation from {device_url}: {e}")
-            return None
+            request_config.inputShape = list(device_inputs.shape)
+            request_config.outputShape = list(device_outputs.shape)
+            request_config.datasetsPerDevice = len(device_inputs)
+
+            request_configs.append(request_config)
+
+        await self.worker.run(
+            request_type=request_type, request_configs=request_configs
+        )
+
+    def _gather(
+        self, request_type: str
+    ) -> Tuple[List[np.ndarray], List[Tuple[float, int]]]:
+        """Gather results from all devices, update model weights, and compute loss"""
+        all_weights = []
+        epoch_device_losses = []
+        outputs = []
+
+        results = self.worker.task_manager.completed_tasks.items()
+
+        for task_id, task in list(results):
+            if task.response_data.outputs is not None:
+                outputs.append(task.response_data.outputs)
+            if task.response_data.weights is not None:
+                all_weights.append(task.response_data.weights)
+            if task.response_data.loss is not None:
+                loss = task.response_data.loss
+                num_samples = len(results)
+                epoch_device_losses.append((loss, num_samples))
+            del self.worker.task_manager.tasks[task_id]
+
+        if all_weights:
+            averaged_weights = average_model_weights(all_weights)
+            self.model.set_weights(averaged_weights)
+
+        if epoch_device_losses:
+            average_loss = average_epoch_loss(epoch_device_losses)
+            self.history[f"{request_type}_loss"].append(average_loss)
+
+        return outputs
+
+    async def _dispatch_gather(self, request_config, datasets, request_type):
+        await self._dispatch(request_config, datasets, request_type)
+        return self._gather(request_type)
+
+    def _print_progress(self, epoch, epochs):
+        """Print progress of training"""
+        log = f"Epoch {epoch + 1}/{epochs} - Loss: {self.history['train_loss'][-1]}"
+        if self._to_validate():
+            log += f" - Validation Loss: {self.history['evaluate_loss'][-1]}"
+        print(log)
 
     def fit(self, epochs):
         """Run federated training process"""
-        self._get_available_devices()
+        request_config = self._create_base_request_config(epochs)
+        print(f"Training on {len(self.worker.available_devices)} devices")
 
         for epoch in range(epochs):
-            print(f"Global Epoch {epoch + 1}/{epochs}")
-            all_weights = []
-            epoch_device_losses = []
-
-            # Train on each device
-            for device_id, (device_url, device_config) in enumerate(
-                zip(self.device_urls, self.device_configs)
-            ):
-                print(f"Training on device {device_id + 1}/{self.num_devices}")
-                is_initial = epoch == 0
-                weights, loss = self._train_device(
-                    device_url, device_config, is_initial
-                )
-
-                if weights is not None:
-                    all_weights.append(weights)
-                    if loss is not None:
-                        epoch_device_losses.append((loss, len(device_config["inputs"])))
-
-            # Average weights if we got results from any devices
-            if all_weights:
-                averaged_weights = self.average_model_weights(all_weights)
-                self.model.set_weights(averaged_weights)
-
-                # Calculate and store average training loss
-                if epoch_device_losses:
-                    total_samples = sum(samples for _, samples in epoch_device_losses)
-                    avg_train_loss = (
-                        sum(loss * samples for loss, samples in epoch_device_losses)
-                        / total_samples
-                    )
-                    self.history["train_loss"].append(avg_train_loss)
-                    self.history["device_losses"].append(
-                        [loss for loss, _ in epoch_device_losses]
-                    )
-                    print(f"Average training loss: {avg_train_loss:.4f}")
-
-                # Validate if validation data is provided
-                if (
-                    self.validation_inputs is not None
-                    and self.validation_outputs is not None
-                ):
-                    val_loss = self.evaluate(
-                        self.validation_inputs, self.validation_outputs
-                    )
-                    self.history["val_loss"].append(val_loss)
-                    print(f"Validation loss: {val_loss:.4f}")
-            else:
-                print("Warning: No weights received from any devices")
-                self.history["train_loss"].append(float("inf"))
-                self.history["device_losses"].append([])
-                if self.validation_inputs is not None:
-                    self.history["val_loss"].append(float("inf"))
-
-    def evaluate(
-        self,
-        inputs: np.ndarray,
-        outputs: np.ndarray,
-        weights: Optional[List[np.ndarray]] = None,
-    ) -> float:
-        """Run distributed evaluation across all devices"""
-        self._get_available_devices()
-
-        if weights is None:
-            weights = self.model.get_weights()
-
-        # Split evaluation data across devices
-        input_splits = np.array_split(inputs, self.num_devices)
-        output_splits = np.array_split(outputs, self.num_devices)
-
-        all_losses = []
-        total_samples = 0
-
-        for device_id, (device_url, device_inputs, device_outputs) in enumerate(
-            zip(self.device_urls, input_splits, output_splits)
-        ):
-            print(f"Evaluating on device {device_id + 1}/{self.num_devices}")
-            loss = self._get_device_evaluation(
-                device_url, device_inputs, device_outputs, weights
+            datasets = split_datasets(
+                self.inputs,
+                self.worker.available_devices,
+                self.batch_size,
+                self.outputs,
+                include_outputs=True,
             )
-            if loss is not None:
-                num_samples = len(device_inputs)
-                all_losses.append((loss * num_samples, num_samples))
-                total_samples += num_samples
 
-        # Compute weighted average of losses
-        if all_losses:
-            weighted_loss = sum(loss for loss, _ in all_losses) / total_samples
-            return weighted_loss
-        return float("inf")
+            _ = asyncio.run(self._dispatch_gather(request_config, datasets, "train"))
+
+            if self._to_validate():
+                _ = self.evaluate()
+
+            self._print_progress(epoch, epochs)
+
+    def evaluate(self) -> None:
+        """Run distributed evaluation across all devices"""
+        request_config = self._create_base_request_config()
+
+        datasets = split_datasets(
+            self.validation_inputs,
+            self.worker.available_devices,
+            self.batch_size,
+            self.validation_outputs,
+            include_outputs=True,
+        )
+
+        _ = asyncio.run(self._dispatch_gather(request_config, datasets, "evaluate"))
 
     def predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
         """Run distributed prediction across all devices"""
-        return self.model.predict(inputs)
-        # self._get_available_devices()
-
-        # input_splits = np.array_split(inputs, self.num_devices)
-        # all_predictions = []
-        # all_losses = []
-        # total_samples = 0
-
-        # current_weights = self.model.get_weights()
-
-        # for device_id, (device_url, device_inputs) in enumerate(
-        #     zip(self.device_urls, input_splits)
-        # ):
-        #     print(f"Getting predictions from device {device_id + 1}/{self.num_devices}")
-        #     predictions, loss = self._get_device_predictions(
-        #         device_url, device_inputs, current_weights
-        #     )
-        #     if predictions is not None:
-        #         all_predictions.append(predictions)
-        #         if loss is not None:
-        #             num_samples = len(device_inputs)
-        #             all_losses.append((loss * num_samples, num_samples))
-        #             total_samples += num_samples
-
-        # if all_predictions:
-        #     combined_predictions = np.concatenate(all_predictions)
-        #     average_loss = (
-        #         (sum(loss for loss, _ in all_losses) / total_samples)
-        #         if all_losses
-        #         else None
-        #     )
-        #     return combined_predictions, average_loss
-
-        # raise RuntimeError("No predictions received from any devices")
-
-    def average_model_weights(
-        self, all_weights: List[List[np.ndarray]]
-    ) -> List[np.ndarray]:
-        averaged_weights = []
-        for layer_weights in zip(*all_weights):
-            avg_layer_weights = np.mean(layer_weights, axis=0)
-            averaged_weights.append(avg_layer_weights)
-        return averaged_weights
-
-    def get_history(self) -> Dict:
-        """Return training history"""
-        return self.history
+        request_config = self._create_base_request_config()
+        datasets = split_datasets(
+            inputs, self.worker.available_devices(), self.batch_size
+        )
+        return asyncio.run(self._dispatch_gather(request_config, datasets, "predict"))

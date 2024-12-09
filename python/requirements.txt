@@ -1,0 +1,10 @@
+importlib_resources>=5.9.0
+tensorflow>=2.13.0,<3
+tf-keras>=2.16.0
+tensorflow-decision-forests>=1.9.0
+six>=1.16.0,<2
+tensorflow-hub>=0.16.1
+packaging~=23.1
+supabase==2.10.0
+realtime==2.0.0
+python-dotenv

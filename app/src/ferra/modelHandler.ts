@@ -1,34 +1,36 @@
 // ModelHandler.ts
 
 import * as tf from '@tensorflow/tfjs';
-import { fetch } from '@tensorflow/tfjs-react-native';
 import { createLossFunction } from './Losses';
 import { createOptimizer } from './Optimizers';
 import { ReceiveConfig } from './Config';
 
 export const loadModel = async (receiveConfig: ReceiveConfig): Promise<tf.LayersModel> => {
   try { 
-    const modelJsonUrl = receiveConfig.modelUrl;
-    const weightsMap = receiveConfig.weights;
+    console.log('RecieveConfig', receiveConfig);
 
-    const weightUrlConverter = (weightFileName: string): string => {
-      const weightUrl = weightsMap[weightFileName];
-      if (weightUrl) {
-        return weightUrl;
+    const customIOHandler = {
+      load: async () => {
+        return {
+          modelTopology: receiveConfig.modelJson.modelTopology,
+          format: receiveConfig.modelJson.format || 'layers-model',
+          generatedBy: receiveConfig.modelJson.generatedBy,
+          convertedBy: receiveConfig.modelJson.convertedBy,
+          // Intentionally omit weightsManifest to prevent automatic weight loading
+        };
       }
-      throw new Error(`"${weightFileName}" not found in receiveConfig.weights.`);
     };
+  
+    // Load the model architecture using the custom IOHandler
+    const loadedModel = await tf.loadLayersModel(customIOHandler);
 
-    const loadedModel = await tf.loadLayersModel(modelJsonUrl, {
-      fetchFunc: fetch,
-      weightUrlConverter: weightUrlConverter,
-    });
+    // Load the weights from the received config
+    const weightTensors = receiveConfig.weights.map(data => tf.tensor(data));
+    loadedModel.setWeights(weightTensors);
+    weightTensors.forEach(tensor => tensor.dispose());
 
-    const response = await fetch(modelJsonUrl);
-    const modelJson = await response.json();
-
-    const optimizer = createOptimizer(modelJson);
-    const lossFunction = createLossFunction(modelJson);
+    const optimizer = createOptimizer(receiveConfig.modelJson);
+    const lossFunction = createLossFunction(receiveConfig.modelJson);
 
     if (optimizer && lossFunction) {
       loadedModel.compile({

@@ -24,8 +24,6 @@ TensorFlow.js-powered machine learning framework for React Native, enabling dist
 │       ├── Prediction.ts     # Inference handling (Henry)
 │       ├── Training.ts       # Training implementation (Henry)
 │       └── index.ts          # Framework entry point (Henry)
-├── ios/                      # iOS specific files
-├── android/                  # Android specific files
 ├── **tests**/                # Test files
 └── package.json              # Project dependencies
 ```
@@ -109,7 +107,7 @@ Just use ferra as shown above, do not modify the codes.
 #### ReceiveConfig
 ```typescript
 interface ReceiveConfig {
-  modelUrl: string;                 // Model URL
+  modelJson: string;                 // Model URL
   weights: [shardFileName: string]; // Model weights
   batchSize: number;                // Micro-batch size
   inputs: number[][];               // Input data
