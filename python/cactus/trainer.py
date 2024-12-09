@@ -1,5 +1,4 @@
 import asyncio
-import time
 from collections import defaultdict
 from typing import List, Optional, Tuple
 
@@ -54,7 +53,7 @@ class Trainer:
 
     def _deserialize_weights(self, weights_data: List) -> List[np.ndarray]:
         """Convert nested lists back to numpy arrays"""
-        return [np.array(w) for w in weights_data]
+        return [np.array(w, dtype=np.float32) for w in weights_data]
 
     def _to_validate(self):
         """Check if validation data is available"""
@@ -101,7 +100,8 @@ class Trainer:
             if task.response_data.outputs is not None:
                 outputs.append(task.response_data.outputs)
             if task.response_data.weights is not None:
-                all_weights.append(task.response_data.weights)
+                deserialized_weights = self._deserialize_weights(task.response_data.weights)
+                all_weights.append(deserialized_weights)
             if task.response_data.loss is not None:
                 loss = task.response_data.loss
                 num_samples = len(results)
@@ -124,9 +124,13 @@ class Trainer:
 
     def _print_progress(self, epoch, epochs):
         """Print progress of training"""
+        if not "train_loss" in self.history:
+            return
+        
         log = f"Epoch {epoch + 1}/{epochs} - Loss: {self.history['train_loss'][-1]}"
         if self._to_validate():
             log += f" - Validation Loss: {self.history['evaluate_loss'][-1]}"
+
         print(log)
 
     def fit(self, epochs):

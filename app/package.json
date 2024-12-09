@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "license": "Apache-2.0",
   "scripts": {
+    "reset": "rm -rf node_modules && rm yarn.lock",
     "start": "expo start",
     "build-local": "eas build --platform ios --local --profile preview"
   },

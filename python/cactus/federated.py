@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-
 def average_model_weights(all_weights: List[List[np.ndarray]]) -> List[np.ndarray]:
     """Compute average of model weights"""
     averaged_weights = []

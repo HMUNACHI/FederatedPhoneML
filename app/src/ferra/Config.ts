@@ -5,47 +5,55 @@ import '@tensorflow/tfjs-react-native';
 
 export interface ReceiveConfig {
   modelJson: JSON;  
-  weights: { [shardFileName: string]: string };
+  weights: number[][][];
   batchSize: number;
-  inputs: number[][];
-  inputShape: number[];
-  outputs?: number[][];
-  outputShape?: number[];
+  inputs: number[][][];
+  inputShape: number[][][];
+  outputs?: number[][][];
+  outputShape?: number[][][];
   epochs?: number;
-  datasetsPerDevice?: number;  
+  datasetsPerDevice?: number; 
 }
 
 export interface SendConfig {
-  weights: Float32Array[];
-  outputs?: Float32Array[];
+  weights: number[][][];
+  outputs?: number[][][];
   loss: number;
 }
 
 export async function processSendConfig(
   model: tf.LayersModel,
   loss: number,
-  modelOutputs?: tf.Tensor[] // Make modelOutputs optional
-): Promise<SendConfig> {
+  modelOutputs?: tf.Tensor[]
+): Promise<{
+  weights: number[][][];  // Changed to support up to 3D arrays
+  outputs?: number[][];
+  loss: number;
+}> {
   try {
     const weights = model.getWeights();
-    const weightData: Float32Array[] = [];
-    const outputData: Float32Array[] = [];
+    const weightData: number[][][] = [];  // Changed to 3D array
+    const outputData: number[][] = [];
 
     // Process weights
     for (const tensor of weights) {
       try {
-        const data = new Float32Array(await tensor.data());
+        const data = await tensor.array();  // Use array() instead of data()
         weightData.push(data);
       } catch (tensorError) {
         console.error('Error processing weight tensor:', tensorError);
         throw tensorError;
       } finally {
-        tensor.dispose();  // Ensure tensor is disposed even if an error occurs
+        tensor.dispose();
       }
     }
     
-    // Initialize SendConfig with weights
-    const sendConfig: SendConfig = {
+    // Initialize sendConfig with weights
+    const sendConfig: {
+      weights: number[][][];  // Changed to 3D array
+      outputs?: number[][];
+      loss: number;
+    } = {
       weights: weightData,
       loss: loss
     };
@@ -54,17 +62,17 @@ export async function processSendConfig(
     if (modelOutputs && modelOutputs.length > 0) {
       for (const tensor of modelOutputs) {
         try {
-          const data = new Float32Array(await tensor.data());
+          const data = await tensor.array();  // Use array() instead of data()
           outputData.push(data);
         } catch (tensorError) {
           console.error('Error processing output tensor:', tensorError);
           throw tensorError;
         } finally {
-          tensor.dispose();  // Ensure tensor is disposed even if an error occurs
+          tensor.dispose();
         }
       }
 
-      // Add outputs to SendConfig
+      // Add outputs to sendConfig
       sendConfig.outputs = outputData;
     }
 

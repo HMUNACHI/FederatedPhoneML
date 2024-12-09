@@ -1,4 +1,4 @@
-from src import Trainer, keras
+from cactus import Trainer, keras
 
 model = keras.Sequential([keras.layers.Input(shape=(1,)), keras.layers.Dense(units=1)])
 model.compile(optimizer="sgd", loss="mean_squared_error")
@@ -11,7 +11,7 @@ trainer = Trainer(
     model,
     inputs,
     outputs,
-    batch_size=3,
+    batch_size=2, # to-do: ensure that the available devices >= batch_size
     validation_inputs=[[5], [6], [7], [8]],
     validation_outputs=[[11], [13], [15], [17]],
 )

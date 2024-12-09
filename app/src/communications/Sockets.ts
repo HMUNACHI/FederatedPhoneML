@@ -51,12 +51,13 @@ export function joinNetwork() {
             const task_type = payload.new.request_type
             const requestConfig = payload.new.request_data
             handleNewFerraTask(task_type, requestConfig).then((responseData) => {
+              console.log({response_data: responseData, response_sent: new Date()});
+              setDeviceAvailability('available');
                 updateTableRows(
                     'tasks',
                     {id: taskId},
                     {response_data: responseData, response_sent: new Date()}
                 );
-                setDeviceAvailability('available');
             })
         }
     )

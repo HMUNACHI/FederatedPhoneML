@@ -32,8 +32,8 @@ class RequestConfig:
 @dataclass
 class ResponseConfig:
     weights: List[List[float]]
-    outputs: Optional[List[List[float]]]
-    loss: float
+    outputs: Optional[List[List[float]]] = None
+    loss: Optional[float] = None
 
 
 @dataclass
@@ -41,7 +41,6 @@ class Task:
     """
     A class to manage tasks broadcasted to the Cactus network.
     """
-
     request_data: RequestConfig
     sent_at: datetime
     response_data: Optional[ResponseConfig] = None
@@ -206,17 +205,24 @@ class Worker:
                         request_type=self.request_type,
                         request_data=self.request_configs[0],
                     )
-                    print(f"Sent initial task to device {device_id}")
                     self.request_configs.pop(0)
 
             while not self.timeout and self.task_manager.incomplete_tasks:
                 await asyncio.sleep(0.25)
+                await self._check_task_timeouts()
 
         except Exception as e:
             print(e)
         finally:
             # Cancel the listening task and disconnect cleanly
             self.listener.cancel()
+
+    async def _check_task_timeouts(self):
+        """
+        Checks whether we have hit timeout
+        """
+        if self.task_manager.expired_tasks:
+            self.timeout = True
 
     def _handle_response(self, payload):
         """

@@ -56,7 +56,7 @@ EXPERIMENTS = "experiments"
 METADATA = "metadata"
 
 # Federated
-DATASET_REPEAT_FACTOR = 2
+DATASET_MINIMUM_REPEAT = 2
 
 
 def get_converted_by():
