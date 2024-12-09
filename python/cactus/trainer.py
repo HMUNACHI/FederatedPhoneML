@@ -100,7 +100,9 @@ class Trainer:
             if task.response_data.outputs is not None:
                 outputs.append(task.response_data.outputs)
             if task.response_data.weights is not None:
-                deserialized_weights = self._deserialize_weights(task.response_data.weights)
+                deserialized_weights = self._deserialize_weights(
+                    task.response_data.weights
+                )
                 all_weights.append(deserialized_weights)
             if task.response_data.loss is not None:
                 loss = task.response_data.loss
@@ -126,7 +128,7 @@ class Trainer:
         """Print progress of training"""
         if not "train_loss" in self.history:
             return
-        
+
         log = f"Epoch {epoch + 1}/{epochs} - Loss: {self.history['train_loss'][-1]}"
         if self._to_validate():
             log += f" - Validation Loss: {self.history['evaluate_loss'][-1]}"
@@ -135,10 +137,11 @@ class Trainer:
 
     def fit(self, epochs):
         """Run federated training process"""
-        request_config = self._create_base_request_config(epochs)
         print(f"Training on {len(self.worker.available_devices)} devices")
 
         for epoch in range(epochs):
+            request_config = self._create_base_request_config(epochs)
+
             datasets = split_datasets(
                 self.inputs,
                 self.worker.available_devices,

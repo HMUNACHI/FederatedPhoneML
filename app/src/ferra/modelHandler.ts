@@ -7,8 +7,6 @@ import { ReceiveConfig } from './Config';
 
 export const loadModel = async (receiveConfig: ReceiveConfig): Promise<tf.LayersModel> => {
   try { 
-    console.log('RecieveConfig', receiveConfig);
-
     const customIOHandler = {
       load: async () => {
         return {
@@ -42,7 +40,7 @@ export const loadModel = async (receiveConfig: ReceiveConfig): Promise<tf.Layers
       console.warn('Optimizer or loss function information not found in model');
     }
 
-    console.log('Model loaded from signed URL and compiled.');
+    console.log('Model loaded from JSON and compiled.');
     return loadedModel;
 
   } catch (error) {

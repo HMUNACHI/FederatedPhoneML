@@ -11,8 +11,8 @@ export interface ReceiveConfig {
   inputShape: number[][][];
   outputs?: number[][][];
   outputShape?: number[][][];
-  epochs?: number;
-  datasetsPerDevice?: number; 
+  epochs?: number; 
+  datasetsPerDevice?: number;
 }
 
 export interface SendConfig {

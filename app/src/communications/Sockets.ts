@@ -17,7 +17,6 @@ async function subscribeToRealtimeTable(
     callback: Function
   ): Promise<void> {
     getCurrentDeviceID().then((deviceId => {
-      console.log(`received device Id ${deviceId}`)
       const channelName = createRealtimeChannelName(table, deviceId)
       const channel = supabase
         .channel(channelName)
@@ -46,12 +45,10 @@ export function joinNetwork() {
         'tasks', 
         'INSERT',
         (payload: object) => {
-            console.log('received payload ', payload)
             const taskId = payload.new.id
             const task_type = payload.new.request_type
             const requestConfig = payload.new.request_data
             handleNewFerraTask(task_type, requestConfig).then((responseData) => {
-              console.log({response_data: responseData, response_sent: new Date()});
               setDeviceAvailability('available');
                 updateTableRows(
                     'tasks',
@@ -88,7 +85,6 @@ async function handleNewFerraTask(
     taskType: TaskType,
     requestData: ReceiveConfig
 ): Promise<object | void> {
-    console.log('Interpreting Ferra request...')
     setDeviceAvailability('busy')
     switch (taskType){
         case TaskType.train:

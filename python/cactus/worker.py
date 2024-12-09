@@ -41,6 +41,7 @@ class Task:
     """
     A class to manage tasks broadcasted to the Cactus network.
     """
+
     request_data: RequestConfig
     sent_at: datetime
     response_data: Optional[ResponseConfig] = None

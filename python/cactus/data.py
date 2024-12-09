@@ -13,7 +13,10 @@ def validate_dataset(inputs: np.ndarray, outputs: np.ndarray) -> None:
 
 
 def repeat_and_shuffle(
-    inputs: np.ndarray, outputs: Optional[np.ndarray] = None, num_devices: int = 1, batch_size: int = 1
+    inputs: np.ndarray,
+    outputs: Optional[np.ndarray] = None,
+    num_devices: int = 1,
+    batch_size: int = 1,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
     Repeat and shuffle dataset. Allows inputs only if outputs are not provided.
@@ -25,28 +28,29 @@ def repeat_and_shuffle(
     validate_dataset(inputs, outputs)
 
     lcm = math.lcm(batch_size, num_devices)
-    
+
     # Ensure new_size is divisible by both batch_size and (new_size/num_devices)
     repeats = math.ceil((len(inputs) * DATASET_MINIMUM_REPEAT) / lcm)
-    
+
     # Adjust repeats to ensure divisibility constraints
     def calculate_valid_size(repeats):
         new_size = repeats * lcm
         slice_size = new_size // num_devices
-        return (
-            (new_size % batch_size == 0) and 
-            (slice_size % batch_size == 0)
-        )
-    
+        return (new_size % batch_size == 0) and (slice_size % batch_size == 0)
+
     # Increment repeats until divisibility conditions are met
     while not calculate_valid_size(repeats):
         repeats += 1
-    
+
     new_size = repeats * lcm
     slice_size = new_size // num_devices
 
-    assert (new_size % batch_size) == 0, f"Dataset size {new_size} must be divisible by the batch size {batch_size}."
-    assert (slice_size % batch_size) == 0, f"Dataset slice size {slice_size} must also be divisible by the batch_size {batch_size}."
+    assert (
+        new_size % batch_size
+    ) == 0, f"Dataset size {new_size} must be divisible by the batch size {batch_size}."
+    assert (
+        slice_size % batch_size
+    ) == 0, f"Dataset slice size {slice_size} must also be divisible by the batch_size {batch_size}."
 
     repeated_inputs = np.repeat(inputs, repeats, axis=0)[:new_size]
 

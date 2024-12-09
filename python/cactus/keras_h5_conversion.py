@@ -464,7 +464,7 @@ def get_keras_model_graph(
       ValueError: If `artifacts_dir` already exists as a file (not a directory).
     """
     temp_h5_path = tempfile.mktemp() + ".h5"
-    model.save(temp_h5_path)
+    model.save(temp_h5_path, save_format="h5")
     topology_json, weight_groups = h5_merged_saved_model_to_tfjs_format(temp_h5_path)
     if os.path.isfile(artifacts_dir):
         raise ValueError('Path "%s" already exists as a file.' % artifacts_dir)

@@ -11,7 +11,7 @@ trainer = Trainer(
     model,
     inputs,
     outputs,
-    batch_size=2, # to-do: ensure that the available devices >= batch_size
+    batch_size=2,  # to-do: ensure that the available devices >= batch_size
     validation_inputs=[[5], [6], [7], [8]],
     validation_outputs=[[11], [13], [15], [17]],
 )
