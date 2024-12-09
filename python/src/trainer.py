@@ -56,6 +56,12 @@ class Trainer:
         """Convert nested lists back to numpy arrays"""
         return [np.array(w) for w in weights_data]
 
+    def _to_validate(self):
+        """Check if validation data is available"""
+        return (
+            self.validation_inputs is not None and self.validation_outputs is not None
+        )
+
     async def _dispatch(
         self,
         request_config: RequestConfig,
@@ -63,6 +69,8 @@ class Trainer:
         request_type: str,
     ) -> None:
         """Dispatch tasks to all available devices"""
+        request_configs = []
+
         for device, device_inputs, device_outputs in datasets:
 
             request_config.inputs = device_inputs.tolist()
@@ -73,9 +81,11 @@ class Trainer:
             request_config.outputShape = list(device_outputs.shape)
             request_config.datasetsPerDevice = len(device_inputs)
 
-            self.worker.send_task(
-                device_id=device, request_type=request_type, request_data=request_config
-            )
+            request_configs.append(request_config)
+
+        await self.worker.run(
+            request_type=request_type, request_configs=request_configs
+        )
 
     def _gather(
         self, request_type: str
@@ -85,21 +95,18 @@ class Trainer:
         epoch_device_losses = []
         outputs = []
 
-        for task_id, task in list(self.worker.task_manager.tasks.items()):
-            print(task.is_completed)
-            if task.is_completed:
-                if task.response_data.outputs is not None:
-                    outputs.append(task.response_data.outputs)
-                if task.response_data.weights is not None:
-                    all_weights.append(task.response_data.weights)
-                if task.response_data.loss is not None:
-                    epoch_device_losses.append(
-                        (
-                            task.response_data.loss,
-                            len(task.request_data.datasets_per_device),
-                        )
-                    )
-                del self.worker.task_manager.tasks[task_id]
+        results = self.worker.task_manager.completed_tasks.items()
+
+        for task_id, task in list(results):
+            if task.response_data.outputs is not None:
+                outputs.append(task.response_data.outputs)
+            if task.response_data.weights is not None:
+                all_weights.append(task.response_data.weights)
+            if task.response_data.loss is not None:
+                loss = task.response_data.loss
+                num_samples = len(results)
+                epoch_device_losses.append((loss, num_samples))
+            del self.worker.task_manager.tasks[task_id]
 
         if all_weights:
             averaged_weights = average_model_weights(all_weights)
@@ -115,14 +122,19 @@ class Trainer:
         await self._dispatch(request_config, datasets, request_type)
         return self._gather(request_type)
 
+    def _print_progress(self, epoch, epochs):
+        """Print progress of training"""
+        log = f"Epoch {epoch + 1}/{epochs} - Loss: {self.history['train_loss'][-1]}"
+        if self._to_validate():
+            log += f" - Validation Loss: {self.history['evaluate_loss'][-1]}"
+        print(log)
+
     def fit(self, epochs):
         """Run federated training process"""
         request_config = self._create_base_request_config(epochs)
         print(f"Training on {len(self.worker.available_devices)} devices")
 
         for epoch in range(epochs):
-            print(f"Global Epoch {epoch + 1}/{epochs}")
-
             datasets = split_datasets(
                 self.inputs,
                 self.worker.available_devices,
@@ -131,22 +143,12 @@ class Trainer:
                 include_outputs=True,
             )
 
-            try:
-                _ = asyncio.run(
-                    asyncio.wait_for(
-                        self._dispatch_gather(request_config, datasets, "fit"),
-                        timeout=10,
-                    )
-                )
-            except asyncio.TimeoutError:
-                print("Dispatch and gather operation timed out.")
-                continue  # Proceed to the next epoch or handle accordingly
+            _ = asyncio.run(self._dispatch_gather(request_config, datasets, "train"))
 
-            if (
-                self.validation_inputs is not None
-                and self.validation_outputs is not None
-            ):
+            if self._to_validate():
                 _ = self.evaluate()
+
+            self._print_progress(epoch, epochs)
 
     def evaluate(self) -> None:
         """Run distributed evaluation across all devices"""
@@ -165,5 +167,7 @@ class Trainer:
     def predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
         """Run distributed prediction across all devices"""
         request_config = self._create_base_request_config()
-        datasets = split_datasets(inputs, self.worker.available_devices(), self.batch_size)
+        datasets = split_datasets(
+            inputs, self.worker.available_devices(), self.batch_size
+        )
         return asyncio.run(self._dispatch_gather(request_config, datasets, "predict"))

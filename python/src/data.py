@@ -1,4 +1,3 @@
-
 import math
 from typing import List, Optional, Tuple
 
@@ -31,10 +30,10 @@ def repeat_and_shuffle(
     repeated_inputs = np.repeat(inputs, DATASET_REPEAT_FACTOR, axis=0)[:truncation_idx]
     adjusted_size = len(repeated_inputs)
 
-    print(f"Dataset size adjusted to {adjusted_size}.")
-
     if outputs is not None:
-        repeated_outputs = np.repeat(outputs, DATASET_REPEAT_FACTOR, axis=0)[:truncation_idx]
+        repeated_outputs = np.repeat(outputs, DATASET_REPEAT_FACTOR, axis=0)[
+            :truncation_idx
+        ]
         indices = np.random.permutation(adjusted_size)
         return repeated_inputs[indices], repeated_outputs[indices]
     else:
