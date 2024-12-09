@@ -220,13 +220,7 @@ class Worker:
 
     def _handle_response(self, payload):
         """
-        Callback to handle responses from the training_tasks table. Here, we:
-
-        - parse the incoming payload
-        - log completion of the task
-        - if there are request_configs remaining (happens when the number of requested configs
-          was higher than the initial number of available devices), we send the device that
-          completed a task its next request config.
+        Callback to handle responses from the training_tasks table. Here, we
         """
         task_id = payload["data"]["record"]["id"]
 
