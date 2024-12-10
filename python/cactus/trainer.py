@@ -27,7 +27,7 @@ class Trainer:
         self.model = model
         self.device_urls = None
         self.batch_size = batch_size
-        self.worker = Worker(0)
+        self._initialize_worker()
         self.inputs = inputs
         self.outputs = outputs
         self.validation_inputs = validation_inputs
@@ -60,6 +60,14 @@ class Trainer:
         return (
             self.validation_inputs is not None and self.validation_outputs is not None
         )
+    
+    def _initialize_worker(self):
+        """
+        In order to have realtime information on available devices, we must connect to
+        realtime in a separate async thread.
+        """
+        self.worker = Worker(0)
+        asyncio.run(self.worker._connect_to_realtime())
 
     async def _dispatch(
         self,
