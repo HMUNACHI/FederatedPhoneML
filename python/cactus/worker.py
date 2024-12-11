@@ -142,6 +142,7 @@ class Worker:
                 request_data=request_data,
                 sent_at=parse(response.data[0]["request_sent"]),
             )
+            print(f"Sent task {response.data[0]['id']}")
             return True
         except Exception as e:
             print(f"Error sending job request: {e}")
@@ -158,9 +159,7 @@ class Worker:
         await client.connect()
         task_channel = client.channel(f"realtime:consumer:{self.id}")
         
-        self.available_devices = self._load_available_devices()
-        
-        print(f'Worker {self.id} connected to realtime! Available devices: {self.available_devices}')
+        self.available_devices = self.load_available_devices()
 
         await task_channel.on_postgres_changes(
             "UPDATE",
@@ -170,6 +169,8 @@ class Worker:
         ).subscribe()
 
         self.listener = asyncio.create_task(client.listen())
+
+        # print(f'Worker {self.id} connected to realtime! Available devices: {self.available_devices}')
 
     async def run(
         self, request_configs: List[RequestConfig], request_type: str
@@ -181,11 +182,9 @@ class Worker:
             "predict",
         ), "Unsupported request type!"
         self.request_type = request_type
-
         self.request_configs = request_configs
 
-        if not self.listener:
-            await self._connect_to_realtime()
+        await self._connect_to_realtime()
 
         try:
             for device_id in self.available_devices:
@@ -207,7 +206,7 @@ class Worker:
             # Cancel the listening task and disconnect cleanly
             self.listener.cancel()
 
-    def _load_available_devices(self) -> List[int]:
+    def load_available_devices(self) -> List[int]:
         "Retrieve devices available at any given point and store them in self.available_devices"
         try:
             response = (
@@ -245,7 +244,7 @@ class Worker:
                 case _:
                     print(f"Unhandled table update: {table}")
         else:
-            print(f"No record from {table}: {record}")
+            print(f"Received empty record from {table}: {record}")
 
     def _task_update_callback(self, record: Dict) -> None:
         """
@@ -259,6 +258,8 @@ class Worker:
         """
         task_id = record.get("id")
         consumer_id = record.get("consumer_id")
+
+        print(f"received task {task_id} from device {record['device_id']}")
 
         if consumer_id == self.id:
             self.task_manager.log_completion(
