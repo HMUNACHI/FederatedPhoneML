@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { setCurrentDeviceID } from 'src/utils/CurrentDevice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -50,12 +51,13 @@ export async function fetchDeviceAvailability(): Promise<string | void>{
 
 export async function setDeviceAvailability ( deviceAvailability:string ): Promise<boolean>{
   // returns success boolean
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (!sessionError){
+  const session = await AsyncStorage.getItem('user_session');
+  if (session){
+    const parsedSession = JSON.parse(session);
     const { data, error } = await supabase
       .from('devices')
       .update({ status: deviceAvailability, last_updated: new Date() })
-      .eq('user_id', sessionData.session?.user.id); 
+      .eq('user_id', parsedSession?.user.id); 
       if (error){
          error;
       }
