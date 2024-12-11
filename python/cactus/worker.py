@@ -142,7 +142,7 @@ class Worker:
                 request_data=request_data,
                 sent_at=parse(response.data[0]["request_sent"]),
             )
-            print(f"Sent task {response.data[0]['id']}")
+            # print(f"Sent task {response.data[0]['id']}")
             return True
         except Exception as e:
             print(f"Error sending job request: {e}")
@@ -259,7 +259,7 @@ class Worker:
         task_id = record.get("id")
         consumer_id = record.get("consumer_id")
 
-        print(f"received task {task_id} from device {record['device_id']}")
+        # print(f"received task {task_id} from device {record['device_id']}")
 
         if consumer_id == self.id:
             self.task_manager.log_completion(
