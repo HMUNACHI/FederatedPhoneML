@@ -118,26 +118,6 @@ class Worker:
         self.task_manager = TaskManager()
         self.timeout = False
 
-    @property
-    def available_devices(self) -> List[int]:
-        "Retrieve devices available at any given point"
-        try:
-            response = (
-                supabase.table("devices")
-                .select("id")
-                .eq("status", "available")
-                .gte(
-                    "last_updated",
-                    (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
-                )
-                .execute()
-            )
-            devices = [device["id"] for device in response.data]
-            return devices
-        except Exception as e:
-            print("Unable to load devices (unexpected error): ", e)
-            return []
-
     def send_task(
         self, device_id: int, request_type: str, request_data: RequestConfig
     ) -> bool:
@@ -162,27 +142,35 @@ class Worker:
                 request_data=request_data,
                 sent_at=parse(response.data[0]["request_sent"]),
             )
+            # print(f"Sent task {response.data[0]['id']}")
             return True
         except Exception as e:
             print(f"Error sending job request: {e}")
             return False
 
     async def _connect_to_realtime(self):
+        """
+        We subscribe to realtime updates to ALL supabase tables and 
+        pass them to the centralized callback function
+        """
         client = AsyncRealtimeClient(
             f"{SUPABASE_URL}/realtime/v1", SUPABASE_ANON_KEY, auto_reconnect=False
         )
         await client.connect()
-        channel = client.channel("tasks")
+        task_channel = client.channel(f"realtime:consumer:{self.id}")
+        
+        self.available_devices = self.load_available_devices()
 
-        await channel.on_postgres_changes(
+        await task_channel.on_postgres_changes(
             "UPDATE",
             schema="public",
-            table="tasks",
-            filter=f"consumer_id=eq.{self.id}",
-            callback=self._handle_response,
+            # filter=f"consumer_id=eq.{self.id}",
+            callback=self._realtime_callback,
         ).subscribe()
 
         self.listener = asyncio.create_task(client.listen())
+
+        # print(f'Worker {self.id} connected to realtime! Available devices: {self.available_devices}')
 
     async def run(
         self, request_configs: List[RequestConfig], request_type: str
@@ -194,8 +182,8 @@ class Worker:
             "predict",
         ), "Unsupported request type!"
         self.request_type = request_type
-
         self.request_configs = request_configs
+
         await self._connect_to_realtime()
 
         try:
@@ -209,7 +197,7 @@ class Worker:
                     self.request_configs.pop(0)
 
             while not self.timeout and self.task_manager.incomplete_tasks:
-                await asyncio.sleep(0.25)
+                await asyncio.sleep(0.1)
                 await self._check_task_timeouts()
 
         except Exception as e:
@@ -218,6 +206,24 @@ class Worker:
             # Cancel the listening task and disconnect cleanly
             self.listener.cancel()
 
+    def load_available_devices(self) -> List[int]:
+        "Retrieve devices available at any given point and store them in self.available_devices"
+        try:
+            response = (
+                supabase.table("devices")
+                .select("id")
+                .eq("status", "available")
+                .gte(
+                    "last_updated",
+                    (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
+                )
+                .execute()
+            )
+            return [device["id"] for device in response.data]
+        except Exception as e:
+            print("Unable to load devices (unexpected error): ", e)
+            return []
+
     async def _check_task_timeouts(self):
         """
         Checks whether we have hit timeout
@@ -225,9 +231,24 @@ class Worker:
         if self.task_manager.expired_tasks:
             self.timeout = True
 
-    def _handle_response(self, payload):
+    def _realtime_callback(self, payload: Dict) -> None:
+        "Main callback for realtime table updates."
+        table = payload.get("data", {}).get("table")
+        record = payload.get("data", {}).get("record")
+        if record:
+            match table:
+                case "devices":
+                    self._device_update_callback(record=record)
+                case "tasks":
+                    self._task_update_callback(record=record)
+                case _:
+                    print(f"Unhandled table update: {table}")
+        else:
+            print(f"Received empty record from {table}: {record}")
+
+    def _task_update_callback(self, record: Dict) -> None:
         """
-        Callback to handle responses from the training_tasks table. Here, we:
+        Callback to handle responses from the tasks table. Here, we:
 
         - parse the incoming payload
         - log completion of the task
@@ -235,17 +256,38 @@ class Worker:
           was higher than the initial number of available devices), we send the device that
           completed a task its next request config.
         """
-        task_id = payload["data"]["record"]["id"]
+        task_id = record.get("id")
+        consumer_id = record.get("consumer_id")
 
-        self.task_manager.log_completion(
-            task_id=task_id,
-            response_data=ResponseConfig(**payload["data"]["record"]["response_data"]),
-        )
-        if self.request_configs:
+        # print(f"received task {task_id} from device {record['device_id']}")
 
-            self.send_task(
-                device_id=payload["data"]["record"]["device_id"],
-                request_type=self.request_type,
-                request_data=self.request_configs[0],
+        if consumer_id == self.id:
+            self.task_manager.log_completion(
+                task_id=task_id,
+                response_data=ResponseConfig(**record["response_data"]),
             )
-            self.request_configs.pop(0)
+            if self.request_configs:
+
+                self.send_task(
+                    device_id=record["device_id"],
+                    request_type=self.request_type,
+                    request_data=self.request_configs[0],
+                )
+                self.request_configs.pop(0)
+
+    def _device_update_callback(self, record: Dict) -> None:
+        """
+        Callback to handle responses from the devices table. Here, we:
+
+        - extract device ID and new status 
+        - add it to the list of available devices 
+        """
+        device_id = record.get("id")
+        status = record.get("status")
+        if status == "available" and device_id not in self.available_devices:
+            self.available_devices.append(device_id)
+        elif status == 'unavailable':
+            if device_id in self.available_devices:
+                self.available_devices.remove(device_id)
+            else:
+                print(f"received unavailability update for device id {device_id}??")

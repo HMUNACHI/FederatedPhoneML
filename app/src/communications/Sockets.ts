@@ -44,18 +44,17 @@ export function joinNetwork() {
     subscribeToRealtimeTable(
         'tasks', 
         'INSERT',
-        (payload: object) => {
+        async (payload: object) => {
             const taskId = payload.new.id
             const task_type = payload.new.request_type
             const requestConfig = payload.new.request_data
-            handleNewFerraTask(task_type, requestConfig).then((responseData) => {
-              setDeviceAvailability('available');
-                updateTableRows(
-                    'tasks',
-                    {id: taskId},
-                    {response_data: responseData, response_sent: new Date()}
-                );
-            })
+            const responseData = await handleNewFerraTask(task_type, requestConfig);
+            await setDeviceAvailability('available');
+            updateTableRows(
+              'tasks',
+              {id: taskId},
+              {response_data: responseData, response_sent: new Date()}
+            );
         }
     )
 }
@@ -85,7 +84,7 @@ async function handleNewFerraTask(
     taskType: TaskType,
     requestData: ReceiveConfig
 ): Promise<object | void> {
-    setDeviceAvailability('busy')
+    await setDeviceAvailability('busy')
     switch (taskType){
         case TaskType.train:
             return await train(requestData)

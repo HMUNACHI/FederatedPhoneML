@@ -27,7 +27,7 @@ class Trainer:
         self.model = model
         self.device_urls = None
         self.batch_size = batch_size
-        self.worker = Worker(0)
+        self.worker = Worker(_id=0)
         self.inputs = inputs
         self.outputs = outputs
         self.validation_inputs = validation_inputs
@@ -132,19 +132,19 @@ class Trainer:
         log = f"Epoch {epoch + 1}/{epochs} - Loss: {self.history['train_loss'][-1]}"
         if self._to_validate():
             log += f" - Validation Loss: {self.history['evaluate_loss'][-1]}"
-
         print(log)
 
     def fit(self, epochs):
         """Run federated training process"""
-        print(f"Training on {len(self.worker.available_devices)} devices")
+        available_devices = self.worker.load_available_devices()
+        print(f"Training on {len(available_devices)} devices")
 
         for epoch in range(epochs):
             request_config = self._create_base_request_config(epochs)
 
             datasets = split_datasets(
                 self.inputs,
-                self.worker.available_devices,
+                available_devices,
                 self.batch_size,
                 self.outputs,
                 include_outputs=True,
@@ -163,7 +163,7 @@ class Trainer:
 
         datasets = split_datasets(
             self.validation_inputs,
-            self.worker.available_devices,
+            self.worker.load_available_devices(),
             self.batch_size,
             self.validation_outputs,
             include_outputs=True,
@@ -175,6 +175,6 @@ class Trainer:
         """Run distributed prediction across all devices"""
         request_config = self._create_base_request_config()
         datasets = split_datasets(
-            inputs, self.worker.available_devices(), self.batch_size
+            inputs, self.worker.load_available_devices(), self.batch_size
         )
         return asyncio.run(self._dispatch_gather(request_config, datasets, "predict"))
