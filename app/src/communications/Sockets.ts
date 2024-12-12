@@ -1,4 +1,4 @@
-import { supabase, updateTableRows, setDeviceAvailability } from "./Supabase";
+import { supabase, insertRow, setDeviceAvailability } from "./Supabase";
 import {isAvailable, train, evaluate, predict} from '../ferra'
 import { ReceiveConfig } from "../ferra/Config";
 
@@ -42,26 +42,25 @@ async function subscribeToRealtimeTable(
 
 export function joinNetwork() {
     subscribeToRealtimeTable(
-        'tasks', 
+        'task_requests', 
         'INSERT',
         async (payload: object) => {
             const taskId = payload.new.id
             const task_type = payload.new.request_type
-            const requestConfig = payload.new.request_data
+            const requestConfig = payload.new.data
             const responseData = await handleNewFerraTask(task_type, requestConfig);
             await setDeviceAvailability('available');
-            updateTableRows(
-              'tasks',
-              {id: taskId},
-              {response_data: responseData, response_sent: new Date()}
-            );
+            insertRow(
+              'task_responses',
+              {id: taskId, data: responseData}
+            )
         }
     )
 }
 
 export async function leaveNetwork() {
   getCurrentDeviceID().then((deviceId) => {
-    const tableName = 'tasks';
+    const tableName = 'task_requests';
     const channelName = createRealtimeChannelName(tableName, deviceId)
     const channel = activeSubscriptions[channelName];
     if (!channel) {
