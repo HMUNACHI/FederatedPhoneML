@@ -6,7 +6,7 @@
   "scripts": {
     "reset": "rm -rf node_modules && rm yarn.lock",
     "start": "expo start",
-    "build-local": "eas build --platform ios --local --profile preview"
+    "build-local": "EXPO_NO_CAPABILITY_SYNC=1 eas build --platform ios --local --profile preview"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.0",
