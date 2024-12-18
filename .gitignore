@@ -173,3 +173,8 @@ app/android/
 *.ipa
 
 *.DS_STORE*
+
+# romans files
+chart_data.json
+plotly_chart.py
+playground.py
