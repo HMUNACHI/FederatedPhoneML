@@ -72,16 +72,17 @@ export const handleLogout = async () => {
 export const handleLogin = async (
   email: string,
   password: string
-): Promise<void> => {
+): Promise<string | null> => {
   try {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) {
-      throw error;
+      return error.message;
     }
   } catch (error: any) {
     throw new Error(error.message || 'Login failed');
   }
+  return null
 };
