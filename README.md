@@ -5,11 +5,11 @@
   <img src="assets/mvpOverview.png" alt="Alt text"/>
 </p>
 
-# Systems Design
-loading...
-
-# Welcome Video
-loading... 
+# Testing
+- Clone with `git clone https://github.com/cactus-compute/mvp.git`
+- Run `cd python`
+- Install the package `pip install -e .`
+- Then run `python test.py` (edit if necessary)
 
 ### Contribution Guidelines
 - No one will be granted Admin access to the protected repo.
