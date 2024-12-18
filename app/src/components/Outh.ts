@@ -49,7 +49,8 @@ export const onAuthStateChange = (
   callback: (isLoggedIn: boolean, session: Session | null) => void
 ) => {
   const { data: authListener } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
+    async (_event, session) => {
+      if (session){await registerOrRetrieveDeviceFromSupabase()}
       callback(!!session, session);
     }
   );
@@ -79,9 +80,6 @@ export const handleLogin = async (
     });
     if (error) {
       throw error;
-    } else {
-      // we should await, otherwise realtime subscription is faster than the device ID fetch and we try to listen to an undefied device ID
-      await registerOrRetrieveDeviceFromSupabase() 
     }
   } catch (error: any) {
     throw new Error(error.message || 'Login failed');
