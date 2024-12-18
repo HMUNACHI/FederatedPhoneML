@@ -13,14 +13,19 @@ import styled from 'styled-components/native';
 
 const LoginScreen = ({ setLoginInProgress }) => {
   const [email, setEmail] = useState('');
+  const [ errorMessage, setErrorMessage ] = useState('')
   const [password, setPassword] = useState('');
 
   const loadingAuth = false; // TODO: update for actual loading auth
 
   const onLoginPress = async () => {
     try {
-      await handleLogin(email, password);
-      setLoginInProgress(false)
+      const error = await handleLogin(email, password)
+      if (error){
+        setErrorMessage(error)
+      }else{
+        setLoginInProgress(false)
+      }
     } catch (error: any) {
       console.log(error.message)
     }
@@ -37,7 +42,7 @@ const LoginScreen = ({ setLoginInProgress }) => {
       <StyledTextInput
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(value:string) => {setEmail(value); setErrorMessage('')}}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -45,8 +50,11 @@ const LoginScreen = ({ setLoginInProgress }) => {
         secureTextEntry={true}
         placeholder="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(value:string) => {setPassword(value); setErrorMessage('')}}
       />
+      {errorMessage ? 
+        <Typography variant='body2' style={{color: theme.colors.primary, marginBottom: 15}}>{errorMessage}</Typography> 
+      : null}
       <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth}>Sign in</CustomButton>
       <SectionBreak>or use</SectionBreak>
       <View style={{flexDirection: 'row', gap: 10}}>
