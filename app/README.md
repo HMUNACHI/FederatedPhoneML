@@ -29,12 +29,16 @@ TensorFlow.js-powered machine learning framework for React Native, enabling dist
 ```
 
 ## Setup Requirements
-
-- Node.js >= 14
-- React Native CLI
 - Xcode (for iOS)
 - Android Studio (for Android)
 - CocoaPods (for iOS)
+
+## Additional setup
+- NVM 
+- Node.js 20
+- yarn
+- ios and android emulators
+
 
 ## Installation
 
