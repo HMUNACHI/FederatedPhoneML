@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { setCurrentDeviceID } from 'src/utils/CurrentDevice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 
 export const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL, process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -10,9 +11,9 @@ export async function insertRow(table: string, data: Record<string, any>): Promi
     try {
       const { error } = await supabase.from(table).insert([data]);
       if (error) {throw error;}
-      console.log(`Row inserted successfully into ${table}`);
+      Sentry.captureMessage(`Row inserted successfully into ${table}`, "log");
     } catch (err) {
-      console.error('Error inserting row:', err);
+      Sentry.captureMessage(`Error inserting row(s): ${err}`, "error");
     }
 }
 
@@ -27,9 +28,9 @@ export async function updateTableRows(
   try {
     const { error } = await supabase.from(table).update(updates).match(criteria);
     if (error) {throw error;}
-    console.log(`Row(s) updated successfully in ${table}`);
+    Sentry.captureMessage(`Row(s) updated successfully in ${table}`, "log");
   } catch (err) {
-    console.error('Error updating row(s):', err);
+    Sentry.captureMessage(`Error updating row(s): ${err}`, "error");
   }
 }
 
@@ -122,10 +123,10 @@ export const registerOrRetrieveDeviceFromSupabase = async () => {
     // Step 3. either set device ID or register this device if there's no device record for this user yet
     const deviceId = await fetchDeviceId()
     if (deviceId) {
-      console.log(`Device id loaded: ${deviceId}, saving to async storage`)
+      Sentry.captureMessage(`Device id loaded: ${deviceId}, saving to async storage`, "log");
       await setCurrentDeviceID(deviceId)
     } else {
-      console.log(`Registering new device ID`)
+      Sentry.captureMessage(`Registering new device ID`, "log");
       await insertRow('devices', {
           user_id: user_id,
           status: 'available',
@@ -136,6 +137,6 @@ export const registerOrRetrieveDeviceFromSupabase = async () => {
       await setCurrentDeviceID(deviceId);
     }
   } catch (err) {
-    console.error('Error registering device with Supabase:', err);
+    Sentry.captureMessage(`Error registering device with Supabase:`, "error");
   }
 }

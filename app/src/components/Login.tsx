@@ -10,6 +10,8 @@ import CustomButton from './primary/Button';
 import theme from '../styles/theme';
 import styled from 'styled-components/native';
 
+import * as Sentry from '@sentry/react-native';
+
 const LoginScreen = ({setLoginInProgress}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +23,7 @@ const LoginScreen = ({setLoginInProgress}) => {
       await handleLogin(email, password);
       setLoginInProgress(false)
     } catch (error: any) {
-      console.log(error.message)
+      Sentry.captureMessage(`${error.message}`, "error")
     }
   };
 

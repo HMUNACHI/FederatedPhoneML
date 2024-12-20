@@ -1,6 +1,7 @@
 import { supabase, insertRow, setDeviceAvailability } from "./Supabase";
 import {isAvailable, train, evaluate, predict} from '../ferra'
 import { ReceiveConfig } from "../ferra/Config";
+import * as Sentry from '@sentry/react-native';
 
 import { getCurrentDeviceID } from "../utils/CurrentDevice";
 
@@ -33,7 +34,7 @@ async function subscribeToRealtimeTable(
           }
         ).subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log(`Successfully subscribed to ${table} for device_id: ${deviceId}`);
+            Sentry.captureMessage(`Successfully subscribed to ${table} for device_id: ${deviceId}`, "log");
             activeSubscriptions[channelName] = channel
           }
         });
@@ -64,12 +65,12 @@ export async function leaveNetwork() {
     const channelName = createRealtimeChannelName(tableName, deviceId)
     const channel = activeSubscriptions[channelName];
     if (!channel) {
-      console.log(`No active subscription found for ${tableName} and device_id: ${deviceId}`);
+      Sentry.captureMessage(`No active subscription found for ${tableName} and device_id: ${deviceId}`, "log");
       return;
     }
     supabase.removeChannel(channel);
     delete activeSubscriptions[channelName]; // Clean up the subscription reference
-    console.log(`Unsubscribed from ${tableName} for device_id: ${deviceId}`);
+    Sentry.captureMessage(`Unsubscribed from ${tableName} for device_id: ${deviceId}`, "log");
   })
 }
 

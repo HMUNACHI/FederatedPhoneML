@@ -2,6 +2,7 @@ import { supabase } from '../communications/Supabase';
 import { Session } from '@supabase/supabase-js';
 import { registerOrRetrieveDeviceFromSupabase } from '../communications/Supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 
 export const checkSession = async (): Promise<boolean> => {
   const { data } = await supabase.auth.getSession();
@@ -62,9 +63,9 @@ export const onAuthStateChange = (
 export const handleLogout = async () => {
   try {
     await supabase.auth.signOut();
-    console.log('User logged out successfully.');
+    Sentry.captureMessage("User logged out successfully.", "log");
   } catch (error) {
-    console.error('Error logging out:', error);
+    Sentry.captureMessage(`Error logging out: ${error}`, "error");
   }
 };
 
@@ -82,6 +83,7 @@ export const handleLogin = async (
     } else {
       // we should await, otherwise realtime subscription is faster than the device ID fetch and we try to listen to an undefied device ID
       await registerOrRetrieveDeviceFromSupabase() 
+      Sentry.captureMessage("User logged in successfully.", "log");
     }
   } catch (error: any) {
     throw new Error(error.message || 'Login failed');

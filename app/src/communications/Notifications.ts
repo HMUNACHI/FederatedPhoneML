@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 
 export async function registerForPushNotificationsAsync() : Promise<void | null> {
   const session = await AsyncStorage.getItem('user_session');
@@ -39,13 +40,13 @@ export async function registerForPushNotificationsAsync() : Promise<void | null>
         if (!response.ok) {
           console.error('Failed to save push token to Supabase:', response.statusText);
         } else {
-          console.log('Push token saved successfully.');
+          Sentry.captureMessage(`Push token saved successfully.`, "log");
         }
       } catch (error) {
-        console.error('Error saving push token to Supabase:', error);
+        Sentry.captureMessage(`Error saving push token to Supabase: ${error}`, "error");
       }
     } else {
-      console.log('Unable to register for push notifications! TODO: Handle missing permission');
+      Sentry.captureMessage(`Unable to register for push notifications! TODO: Handle missing permission`, "error");
     }
   }
 }
@@ -60,12 +61,12 @@ Notifications.setNotificationHandler({
 
 export const setupNotificationListeners = () => {
   Notifications.addNotificationReceivedListener((notification) => {
-    console.log('Notification received:', notification);
+    Sentry.captureMessage(`Notification received: ${notification}`, "log");
     // Handle the notification
   });
 
   Notifications.addNotificationResponseReceivedListener((response) => {
-    console.log('Notification response received:', response);
+    Sentry.captureMessage(`Notification response received: ${response}`, "log");
     // Handle notification tap or interaction
   });
 };

@@ -15,6 +15,8 @@ import { joinNetwork, leaveNetwork } from "../communications/Sockets";
 import { handleLogout } from "./Outh";
 import { fetchDeviceAvailability, setDeviceAvailability, Heartbeat } from "../communications/Supabase";
 
+import * as Sentry from "@sentry/react-native";
+
 
 const HomePage: React.FC = () => {
     const [loadingAvailability, setLoadingAvailability] = useState(true);
@@ -32,7 +34,7 @@ const HomePage: React.FC = () => {
                         leaveNetwork();
                 }
             }
-            else{console.log('unable to update device availability!')}
+            else{Sentry.captureMessage(`Unable to update device availability`, "log");}
         })
     };
 

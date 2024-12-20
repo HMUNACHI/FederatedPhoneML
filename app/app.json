@@ -19,6 +19,17 @@
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification"]
       }
-    }
+    },
+    "plugins": [
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "cactus-compute",
+          "project": "cactus-mvp",
+          "note": "Use SENTRY_AUTH_TOKEN env to authenticate with Sentry."
+        }
+      ]
+    ]
   }
 }

@@ -7,8 +7,15 @@ import HomePage from './components/Home';
 import { restoreSession, saveSession, clearSession } from './components/Outh';
 import { registerForPushNotificationsAsync, setupNotificationListeners } from './communications/Notifications';
 import { checkSession, onAuthStateChange } from './components/Outh';
+import * as Sentry from '@sentry/react-native';
 
 import theme from './styles/theme';
+
+Sentry.init({
+  dsn: "https://650319efe1b8f9519794da3318e40955@o4508501128577024.ingest.us.sentry.io/4508501145878528",
+  enableNative: true,
+  debug: true,
+});
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -47,10 +54,9 @@ const App = () => {
     <SafeAreaView  style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ThemeProvider theme={styledTheme}>
             {(isLoggedIn && !loginInProgress) ? <HomePage/> : <LoginScreen setLoginInProgress={setLoginInProgress} />}
-            {/* <HomePage/> */}
         </ThemeProvider>
     </SafeAreaView>
   );
 };
 
-export default App;
+export default Sentry.wrap(App);
