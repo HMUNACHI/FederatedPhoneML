@@ -5,6 +5,7 @@
     "slug": "Cactus",
     "version": "1.0.0",
     "sdkVersion": "51.0.0",
+    "jsEngine": "hermes",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -14,7 +15,10 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.rshemet.Cactus"
+      "bundleIdentifier": "com.rshemet.Cactus",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
     }
   }
 }

@@ -5,10 +5,8 @@ import { ThemeProvider } from 'styled-components/native';
 import LoginScreen from './components/Login';
 import HomePage from './components/Home';
 import { restoreSession, saveSession, clearSession } from './components/Outh';
-import {
-  checkSession,
-  onAuthStateChange,
-} from './components/Outh';
+import { registerForPushNotificationsAsync, setupNotificationListeners } from './communications/Notifications';
+import { checkSession, onAuthStateChange } from './components/Outh';
 
 import theme from './styles/theme';
 
@@ -34,6 +32,8 @@ const App = () => {
   
       if (isLoggedIn && session) {
         await saveSession(session);
+        await registerForPushNotificationsAsync();
+        setupNotificationListeners();
         setLoginInProgress(false);
       } else if (!isLoggedIn) {
         await clearSession();
