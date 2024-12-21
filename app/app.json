@@ -4,6 +4,7 @@
     "icon": "src/assets/images/appstore1024.png",
     "slug": "Cactus",
     "version": "1.0.0",
+    "projectId": "7e086f19-c37d-4a4e-ba43-7e59fbc312ee",
     "sdkVersion": "51.0.0",
     "jsEngine": "hermes",
     "assetBundlePatterns": [
@@ -17,7 +18,10 @@
     "ios": {
       "bundleIdentifier": "com.rshemet.Cactus",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification",
+          "remote-notification"
+        ]
       }
     },
     "plugins": [
