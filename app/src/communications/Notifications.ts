@@ -22,10 +22,15 @@ export async function registerForPushNotificationsAsync() : Promise<void | null>
       return null;
     }
 
-    const projectId = Constants.expoConfig.extra.eas.projectId;
-    const pushToken = (await Notifications.getExpoPushTokenAsync(
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    if (!projectId) {
+      Sentry.captureMessage('Project ID not found', "error");
+    }else{
+      Sentry.captureMessage(`Project ID loaded: ${projectId}`, "log");
+    }
+    const pushToken = (await Notifications.getExpoPushTokenAsync({
       projectId
-    )).data;
+    })).data;
     if (pushToken) {
       try {
         const response = await fetch('https://qunrxbelodkkjibgrvnz.supabase.co/rest/v1/tokens?on_conflict=user_id', {
