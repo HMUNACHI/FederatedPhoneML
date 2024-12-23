@@ -253,7 +253,6 @@ class Worker:
         """
         record = payload.get("data", {}).get("record")
         task_id = record.get("id")
-        # print(f"received task {task_id}")
         if task_id in self.task_manager.tasks:
             self.task_manager.log_completion(
                 task_id=task_id,

@@ -15,6 +15,13 @@ import six
 from .common import *
 from .write_weights import write_weights
 
+import warnings
+from urllib3.exceptions import NotOpenSSLWarning
+
+# Suppress the specific warning
+warnings.filterwarnings('ignore', category=UserWarning, message='You are saving your model as an HDF5 file.*')
+warnings.filterwarnings('ignore', category=NotOpenSSLWarning, message='urllib3 v2 only supports OpenSSL 1.1.1+.*')
+
 
 def normalize_weight_name(weight_name):
     """Remove suffix ":0" (if present) from weight name."""
@@ -425,10 +432,6 @@ def write_artifacts(
     model_json[ARTIFACT_WEIGHTS_MANIFEST_KEY] = weights_manifest
     return model_json
 
-    model_json_path = os.path.join(output_dir, ARTIFACT_MODEL_JSON_FILE_NAME)
-    with open(model_json_path, "wt") as f:
-        json.dump(model_json, f)
-
 
 def get_keras_model_graph(
     model,
@@ -478,4 +481,3 @@ def get_keras_model_graph(
         weight_shard_size_bytes=weight_shard_size_bytes,
         metadata=metadata,
     )
-    os.remove(temp_h5_path)
