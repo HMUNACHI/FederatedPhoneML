@@ -25,9 +25,10 @@ class Trainer:
     ):
 
         self.model = model
+        self.modelJson = get_keras_model_graph(self.model)
         self.device_urls = None
         self.batch_size = batch_size
-        self.worker = Worker(_id=0)
+        self.worker = Worker(_id=np.random.randint(0, 100000))
         self.inputs = inputs
         self.outputs = outputs
         self.validation_inputs = validation_inputs
@@ -37,7 +38,7 @@ class Trainer:
     def _create_base_request_config(self, epochs=None) -> RequestConfig:
         """Create base request configuration"""
         return RequestConfig(
-            modelJson=get_keras_model_graph(self.model),
+            modelJson=self.modelJson,
             weights=self._get_weights(),
             batchSize=self.batch_size,
             epochs=epochs,
