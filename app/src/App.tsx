@@ -9,6 +9,7 @@ import {
   checkSession,
   onAuthStateChange,
 } from './components/Outh';
+import { registerForPushNotificationsAsync, setupNotificationListeners } from './communications/Notifications';
 
 import theme from './styles/theme';
 
@@ -34,6 +35,7 @@ const App = () => {
   
       if (isLoggedIn && session) {
         await saveSession(session);
+        await registerForPushNotificationsAsync();
         setLoginInProgress(false);
       } else if (!isLoggedIn) {
         await clearSession();
