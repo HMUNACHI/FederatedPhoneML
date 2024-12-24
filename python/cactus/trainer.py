@@ -13,7 +13,6 @@ from .worker import RequestConfig, Worker
 
 class Trainer:
     """Distributed training by using federated training class"""
-
     def __init__(
         self,
         model: keras.Model,
@@ -135,12 +134,12 @@ class Trainer:
             log += f" - Validation Loss: {self.history['evaluate_loss'][-1]}"
         print(log)
 
-    def fit(self, epochs):
+    async def _fit(self, epochs):
         """Run federated training process"""
         available_devices = self.worker.load_available_devices()
         print(f"Training on {len(available_devices)} devices")
 
-        for epoch in range(epochs):
+        async def fit_epoch(epoch):
             request_config = self._create_base_request_config(epochs)
 
             datasets = split_datasets(
@@ -151,14 +150,21 @@ class Trainer:
                 include_outputs=True,
             )
 
-            _ = asyncio.run(self._dispatch_gather(request_config, datasets, "train"))
+            await self._dispatch_gather(request_config, datasets, "train")
 
             if self._to_validate():
-                _ = self.evaluate()
+                await self._evaluate()
 
             self._print_progress(epoch, epochs)
 
-    def evaluate(self) -> None:
+        for epoch in range(epochs):
+            await fit_epoch(epoch)
+
+    def fit(self, epochs: int) -> None:
+        """Run federated training process"""
+        asyncio.run(self._fit(epochs))
+
+    async def _evaluate(self) -> None:
         """Run distributed evaluation across all devices"""
         request_config = self._create_base_request_config()
 
@@ -170,12 +176,20 @@ class Trainer:
             include_outputs=True,
         )
 
-        _ = asyncio.run(self._dispatch_gather(request_config, datasets, "evaluate"))
+        await self._dispatch_gather(request_config, datasets, "evaluate")
 
-    def predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
+    def evaluate(self) -> None:
+        """Run distributed evaluation across all devices"""
+        asyncio.run(self._evaluate())
+
+    async def _predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
         """Run distributed prediction across all devices"""
         request_config = self._create_base_request_config()
         datasets = split_datasets(
             inputs, self.worker.load_available_devices(), self.batch_size
         )
-        return asyncio.run(self._dispatch_gather(request_config, datasets, "predict"))
+        return await self._dispatch_gather(request_config, datasets, "predict")
+    
+    def predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
+        """Run distributed prediction across all devices"""
+        return asyncio.run(self._predict(inputs))
