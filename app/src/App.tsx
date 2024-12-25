@@ -36,6 +36,7 @@ const App = () => {
       if (isLoggedIn && session) {
         await saveSession(session);
         await registerForPushNotificationsAsync();
+        setupNotificationListeners()
         setLoginInProgress(false);
       } else if (!isLoggedIn) {
         await clearSession();
