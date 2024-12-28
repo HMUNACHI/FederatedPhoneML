@@ -5,6 +5,10 @@
     "slug": "Cactus",
     "version": "1.0.0",
     "sdkVersion": "51.0.0",
+    "splash": {
+      "image": "src/assets/images/appstore1024.png",
+      "backgroundColor": "#0D0D0D"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -15,6 +19,10 @@
     },
     "ios": {
       "bundleIdentifier": "com.rshemet.Cactus"
+    },
+    "android": {
+      "package": "com.rshemet.Cactus",
+      "googleServicesFile": "./google-services.json"
     }
   }
 }
