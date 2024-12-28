@@ -6,7 +6,8 @@
   "scripts": {
     "reset": "rm -rf node_modules && rm yarn.lock",
     "start": "expo start",
-    "build-local": "EXPO_NO_CAPABILITY_SYNC=1 eas build --platform ios --local --profile preview"
+    "build-ios-local": "EXPO_NO_CAPABILITY_SYNC=1 eas build --platform ios --local --profile preview",
+    "build-android-local": "eas build --platform android --profile preview --local"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -22,6 +23,7 @@
     "expo-file-system": "~17.0.1",
     "expo-gl": "~14.0.2",
     "expo-notifications": "0.28.19",
+    "expo-task-manager": "^12.0.3",
     "react": "18.2.0",
     "react-native": "0.74.5",
     "react-native-dotenv": "^3.4.11",
