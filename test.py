@@ -12,6 +12,10 @@ inputs = [[1], [2], [3], [4], [5]]
 outputs = [[3], [5], [7], [9], [11]]
 
 # Only additional code needed
+
+import time
+
+start = time.time()
 trainer = Trainer(
     model,
     inputs,
@@ -21,3 +25,6 @@ trainer = Trainer(
     validation_outputs=[[11], [13], [15], [17]],
 )
 trainer.fit(epochs=3)
+end = time.time()
+
+print(f"Training took {end - start:.2f} seconds")
