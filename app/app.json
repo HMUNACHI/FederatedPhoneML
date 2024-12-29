@@ -3,6 +3,7 @@
     "name": "Cactus",
     "icon": "src/assets/images/appstore1024.png",
     "slug": "Cactus",
+    "owner": "rshemet",
     "version": "1.0.0",
     "sdkVersion": "51.0.0",
     "splash": {
