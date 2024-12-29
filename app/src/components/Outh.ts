@@ -86,3 +86,21 @@ export const handleLogin = async (
   }
   return null
 };
+
+export const handleSignup = async (
+  email: string,
+  password: string
+): Promise<string | null> => {
+  try {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) {
+      return error.message;
+    }
+  } catch (error: any) {
+    throw new Error(error.message || 'Login failed');
+  }
+  return null
+};
