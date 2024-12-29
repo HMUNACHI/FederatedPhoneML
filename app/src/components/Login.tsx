@@ -56,10 +56,10 @@ const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
         <Typography variant='body2' style={{color: theme.colors.primary, marginBottom: 15}}>{errorMessage}</Typography> 
       : null}
       <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth}>Sign in</CustomButton>
-      <SectionBreak>or use</SectionBreak>
+      {/* <SectionBreak>or use</SectionBreak>
       <View style={{flexDirection: 'row', gap: 10}}>
         <PlatformAuth/>
-      </View>
+      </View> */}
       <View style={{flex: 1}}/>
       <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
         <Typography variant='body2'>Don't have an account? </Typography>
