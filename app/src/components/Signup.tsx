@@ -14,10 +14,12 @@ const SignupScreen = ({ setLoginInProgress, switchToLogin }) => {
   const [ errorMessage, setErrorMessage ] = useState('')
   const [ password, setPassword ] = useState('');
   const [ passwordConfirmation, setPasswordConfirmation ] = useState('');
+  const [ buttonLoading, setButtonLoading ] = useState(false);
 
   const loadingAuth = false; // TODO: update for actual loading auth
 
   const onSignupPress = async () => {
+    setButtonLoading(true)
     if (password !== passwordConfirmation){setErrorMessage('Passwords must match')}
     try {
       const error = await handleSignup(email, password)
@@ -29,6 +31,7 @@ const SignupScreen = ({ setLoginInProgress, switchToLogin }) => {
     } catch (error: any) {
       console.log(error.message)
     }
+    setButtonLoading(false)
   };
 
   useEffect(() => {
@@ -61,7 +64,7 @@ const SignupScreen = ({ setLoginInProgress, switchToLogin }) => {
       {errorMessage ? 
         <Typography variant='body2' style={{color: theme.colors.primary, marginBottom: 15}}>{errorMessage}</Typography> 
       : null}
-      <CustomButton customVariant='primary' onPress={onSignupPress} loading={loadingAuth}>Sign up</CustomButton>
+      <CustomButton customVariant='primary' onPress={onSignupPress} loading={loadingAuth || buttonLoading}>Sign up</CustomButton>
       <View style={{flex: 1}}/>
       <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
         <Typography variant='body2'>Already have an account? </Typography>

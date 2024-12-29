@@ -15,10 +15,12 @@ const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
   const [email, setEmail] = useState('');
   const [ errorMessage, setErrorMessage ] = useState('')
   const [ password, setPassword ] = useState('');
+  const [ buttonLoading, setButtonLoading ] = useState(false);
 
   const loadingAuth = false; // TODO: update for actual loading auth
 
   const onLoginPress = async () => {
+    setButtonLoading(true)
     try {
       const error = await handleLogin(email, password)
       if (error){
@@ -29,6 +31,7 @@ const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
     } catch (error: any) {
       console.log(error.message)
     }
+    setButtonLoading(false)
   };
 
   useEffect(() => {
@@ -55,7 +58,7 @@ const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
       {errorMessage ? 
         <Typography variant='body2' style={{color: theme.colors.primary, marginBottom: 15}}>{errorMessage}</Typography> 
       : null}
-      <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth}>Sign in</CustomButton>
+      <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth || buttonLoading}>Sign in</CustomButton>
       {/* <SectionBreak>or use</SectionBreak>
       <View style={{flexDirection: 'row', gap: 10}}>
         <PlatformAuth/>
