@@ -6,6 +6,7 @@ import LoginScreen from './components/Login';
 import SignupScreen from './components/Signup';
 import HomePage from './components/Home';
 import { restoreSession, saveSession, clearSession } from './components/Outh';
+import { useKeepAwake } from 'expo-keep-awake';
 import {
   checkSession,
   onAuthStateChange,
@@ -14,6 +15,7 @@ import {
 import theme from './styles/theme';
 
 const App = () => {
+  useKeepAwake();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginInProgress, setLoginInProgress] = useState(false);
   const [authScreen, setAuthScreen] = useState<'login' | 'register'>('login');

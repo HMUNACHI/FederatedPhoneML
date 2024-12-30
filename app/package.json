@@ -20,6 +20,7 @@
     "expo-camera": "~15.0.16",
     "expo-file-system": "~17.0.1",
     "expo-gl": "~14.0.2",
+    "expo-keep-awake": "~x.x.x",
     "react": "18.2.0",
     "react-native": "0.74.5",
     "react-native-dotenv": "^3.4.11",
