@@ -157,7 +157,7 @@ class Trainer:
 
             self._print_progress(epoch, epochs)
 
-        for epoch in range(epochs):
+        for epoch in range(1):
             await fit_epoch(epoch)
 
     def fit(self, epochs: int) -> None:

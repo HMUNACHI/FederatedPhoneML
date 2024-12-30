@@ -36,7 +36,7 @@ def repeat_and_shuffle(
     def calculate_valid_size(repeats):
         new_size = repeats * lcm
         slice_size = new_size // num_devices
-        return (new_size % batch_size == 0) and (slice_size % batch_size == 0)
+        return (new_size % batch_size == 0) and (slice_size % batch_size == 0) and (new_size % num_devices == 0)
 
     # Increment repeats until divisibility conditions are met
     while not calculate_valid_size(repeats):
@@ -52,12 +52,28 @@ def repeat_and_shuffle(
         slice_size % batch_size
     ) == 0, f"Dataset slice size {slice_size} must also be divisible by the batch_size {batch_size}."
 
-    repeated_inputs = np.repeat(inputs, repeats, axis=0)[:new_size]
+    repeated_inputs = np.repeat(inputs, repeats, axis=0)
+    if repeated_inputs.shape[0] < new_size:
+        repeated_inputs = np.concatenate(
+            [repeated_inputs, repeated_inputs[: new_size - repeated_inputs.shape[0]]]
+        )
+    elif repeated_inputs.shape[0] > new_size:
+        repeated_inputs = repeated_inputs[:new_size]
 
     if outputs is not None:
-        repeated_outputs = np.repeat(outputs, repeats, axis=0)[:new_size]
+        assert (
+            len(inputs) == len(outputs)
+        ), "Input and output shapes do not match. Ensure that the number of inputs and outputs are equal."
+        repeated_outputs = np.repeat(outputs, repeats, axis=0)
+        if repeated_outputs.shape[0] < new_size:
+            repeated_outputs = np.concatenate(
+                [repeated_outputs, repeated_outputs[: new_size - repeated_outputs.shape[0]]]
+            )
+        elif repeated_outputs.shape[0] > new_size:
+            repeated_outputs = repeated_outputs[:new_size]
         indices = np.random.permutation(new_size)
         return repeated_inputs[indices], repeated_outputs[indices]
+
     else:
         indices = np.random.permutation(new_size)
         return repeated_inputs[indices], None
