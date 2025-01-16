@@ -12,7 +12,7 @@ from supabase import Client, create_client
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-TASK_TIMEOUT = 2  # seconds
+TASK_TIMEOUT = 5  # seconds
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 
@@ -180,8 +180,6 @@ class Worker:
 
         self.listener = asyncio.create_task(client.listen())
 
-        # print(f'Worker {self.id} connected to realtime! Available devices: {self.available_devices}')
-
     async def run(
         self, request_configs: List[RequestConfig], request_type: str
     ) -> None:
@@ -207,7 +205,7 @@ class Worker:
                     self.request_configs.pop(0)
 
             while not self.timeout and self.task_manager.incomplete_tasks:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.01)
                 await self._check_task_timeouts()
 
         except Exception as e:

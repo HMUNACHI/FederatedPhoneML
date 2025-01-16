@@ -28,11 +28,12 @@ class Trainer:
         self.device_urls = None
         self.batch_size = batch_size
         self.worker = Worker(_id=np.random.randint(0, 100000))
-        self.inputs = inputs
-        self.outputs = outputs
+        self.inputs = np.asarray(inputs)
+        self.outputs = np.asarray(outputs)
         self.validation_inputs = validation_inputs
         self.validation_outputs = validation_outputs
         self.history = defaultdict(list)
+        self.device_epochs = 1
 
     def _create_base_request_config(self, epochs=None) -> RequestConfig:
         """Create base request configuration"""
@@ -40,7 +41,7 @@ class Trainer:
             modelJson=self.modelJson,
             weights=self._get_weights(),
             batchSize=self.batch_size,
-            epochs=epochs,
+            epochs=self.device_epochs,
         )
 
     def _reset(self):
@@ -77,7 +78,10 @@ class Trainer:
                 device_outputs.tolist() if device_outputs is not None else None
             )
             request_config.inputShape = list(device_inputs.shape)
-            request_config.outputShape = list(device_outputs.shape)
+
+            if device_outputs is not None:
+                request_config.outputShape = list(device_outputs.shape)
+
             request_config.datasetsPerDevice = len(device_inputs)
 
             request_configs.append(request_config)
@@ -145,7 +149,6 @@ class Trainer:
             datasets = split_datasets(
                 self.inputs,
                 available_devices,
-                self.batch_size,
                 self.outputs,
                 include_outputs=True,
             )
@@ -157,7 +160,7 @@ class Trainer:
 
             self._print_progress(epoch, epochs)
 
-        for epoch in range(1):
+        for epoch in range(epochs):
             await fit_epoch(epoch)
 
     def fit(self, epochs: int) -> None:
@@ -171,7 +174,6 @@ class Trainer:
         datasets = split_datasets(
             self.validation_inputs,
             self.worker.load_available_devices(),
-            self.batch_size,
             self.validation_outputs,
             include_outputs=True,
         )
@@ -185,9 +187,7 @@ class Trainer:
     async def _predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:
         """Run distributed prediction across all devices"""
         request_config = self._create_base_request_config()
-        datasets = split_datasets(
-            inputs, self.worker.load_available_devices(), self.batch_size
-        )
+        datasets = split_datasets(inputs, self.worker.load_available_devices())
         return await self._dispatch_gather(request_config, datasets, "predict")
     
     def predict(self, inputs: np.ndarray) -> Tuple[np.ndarray, Optional[float]]:

@@ -1,3 +1,4 @@
+import numpy as np
 from cactus import Trainer, keras
 
 model = keras.Sequential([
@@ -8,14 +9,12 @@ model = keras.Sequential([
 
 model.compile(optimizer="sgd", loss="mean_squared_error")
 
-inputs = [[1], [2], [3], [4], [5]]
-outputs = [[3], [5], [7], [9], [11]]
+inputs = np.random.randint(1, 6, size=(200, 1)) 
+outputs = inputs * 2 + 1  
 
-# Only additional code needed
+# import time
+# start = time.time()
 
-import time
-
-start = time.time()
 trainer = Trainer(
     model,
     inputs,
@@ -24,7 +23,11 @@ trainer = Trainer(
     validation_inputs=[[5], [6], [7], [8]],
     validation_outputs=[[11], [13], [15], [17]],
 )
-trainer.fit(epochs=3)
-end = time.time()
 
-print(f"Training took {end - start:.2f} seconds")
+while True:
+    trainer.fit(epochs=3)
+
+# print(f"Training took {time.time() - start:.2f} seconds")
+
+# preds = trainer.predict(inputs[:10])
+# print(f"Predictions: {preds}")

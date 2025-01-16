@@ -2,36 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { handleLogin } from './Outh';
 import SectionBreak from './primary/SectionBreak';
 import Typography from './primary/Typography';
-import { Image, View, TouchableOpacity } from 'react-native';
+import { Image } from 'react-native';
 import CactusLogo from "../assets/images/logo_light_grey.png"
 import StyledTextInput from './primary/TextField';
 import CustomButton from './primary/Button';
-import { PlatformAuth } from './auth/PlatformAuth.native';
 
 import theme from '../styles/theme';
 import styled from 'styled-components/native';
 
-const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
+const LoginScreen = ({setLoginInProgress}) => {
   const [email, setEmail] = useState('');
-  const [ errorMessage, setErrorMessage ] = useState('')
-  const [ password, setPassword ] = useState('');
-  const [ buttonLoading, setButtonLoading ] = useState(false);
+  const [password, setPassword] = useState('');
 
   const loadingAuth = false; // TODO: update for actual loading auth
 
   const onLoginPress = async () => {
-    setButtonLoading(true)
     try {
-      const error = await handleLogin(email, password)
-      if (error){
-        setErrorMessage(error)
-      }else{
-        setLoginInProgress(false)
-      }
+      await handleLogin(email, password);
+      setLoginInProgress(false)
     } catch (error: any) {
       console.log(error.message)
     }
-    setButtonLoading(false)
   };
 
   useEffect(() => {
@@ -45,7 +36,7 @@ const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
       <StyledTextInput
         placeholder="Email"
         value={email}
-        onChangeText={(value:string) => {setEmail(value); setErrorMessage('')}}
+        onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -53,25 +44,10 @@ const LoginScreen = ({ setLoginInProgress, switchToRegister }) => {
         secureTextEntry={true}
         placeholder="Password"
         value={password}
-        onChangeText={(value:string) => {setPassword(value); setErrorMessage('')}}
+        onChangeText={setPassword}
       />
-      {errorMessage ? 
-        <Typography variant='body2' style={{color: theme.colors.primary, marginBottom: 15}}>{errorMessage}</Typography> 
-      : null}
-      <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth || buttonLoading}>Sign in</CustomButton>
-      {/* <SectionBreak>or use</SectionBreak>
-      <View style={{flexDirection: 'row', gap: 10}}>
-        <PlatformAuth/>
-      </View> */}
-      <View style={{flex: 1}}/>
-      <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-        <Typography variant='body2'>Don't have an account? </Typography>
-        <TouchableOpacity onPress={switchToRegister}>
-          <Typography variant='body2' style={{color: theme.colors.primary, fontWeight: 400 }}>
-            Click here to sign up
-          </Typography>
-        </TouchableOpacity>
-      </View>
+      <CustomButton customVariant='primary' onPress={onLoginPress} loading={loadingAuth}>Sign in</CustomButton>
+      <SectionBreak>or</SectionBreak>
     </StyledAuthView>
   );
 };

@@ -3,12 +3,12 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from .common import DATASET_MINIMUM_REPEAT
+# from .common import DATASET_MINIMUM_REPEAT  # Removed since repetition is no longer needed
 
 
 def validate_dataset(inputs: np.ndarray, outputs: np.ndarray) -> None:
-    """Validate dataset shapes"""
-    if len(inputs) != len(outputs):
+    """Validate that inputs and outputs have the same number of samples."""
+    if outputs is not None and len(inputs) != len(outputs):
         raise ValueError("Input and output shapes do not match")
 
 
@@ -19,87 +19,76 @@ def repeat_and_shuffle(
     batch_size: int = 1,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
-    Repeat and shuffle dataset. Allows inputs only if outputs are not provided.
+    Shuffle the dataset without repeating.
 
-    Innovation Motivation:
-    - User-managed devices have a high dropout rate in federated learning.
-    - To ensure that a copy of the datapoint exists on another device, the dataset is repeated.
+    Args:
+        inputs (np.ndarray): Input data.
+        outputs (Optional[np.ndarray]): Output data. Can be None.
+        num_devices (int): Number of devices to split the data across. (Unused in shuffling)
+        batch_size (int): Size of each batch. (Unused in shuffling)
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: Shuffled inputs and outputs.
     """
     validate_dataset(inputs, outputs)
 
-    lcm = math.lcm(batch_size, num_devices)
+    if not isinstance(inputs, np.ndarray):
+        inputs = np.array(inputs)
+    if outputs is not None and not isinstance(outputs, np.ndarray):
+        outputs = np.array(outputs)
 
-    # Ensure new_size is divisible by both batch_size and (new_size/num_devices)
-    repeats = math.ceil((len(inputs) * DATASET_MINIMUM_REPEAT) / lcm)
+    new_size = len(inputs)
+    indices = np.random.permutation(new_size)
 
-    # Adjust repeats to ensure divisibility constraints
-    def calculate_valid_size(repeats):
-        new_size = repeats * lcm
-        slice_size = new_size // num_devices
-        return (new_size % batch_size == 0) and (slice_size % batch_size == 0) and (new_size % num_devices == 0)
+    if not isinstance(indices, np.ndarray) or indices.dtype.kind not in {'i', 'u'} or indices.ndim != 1:
+        raise TypeError("Indices must be a one-dimensional array of integers.")
 
-    # Increment repeats until divisibility conditions are met
-    while not calculate_valid_size(repeats):
-        repeats += 1
-
-    new_size = repeats * lcm
-    slice_size = new_size // num_devices
-
-    assert (
-        new_size % batch_size
-    ) == 0, f"Dataset size {new_size} must be divisible by the batch size {batch_size}."
-    assert (
-        slice_size % batch_size
-    ) == 0, f"Dataset slice size {slice_size} must also be divisible by the batch_size {batch_size}."
-
-    repeated_inputs = np.repeat(inputs, repeats, axis=0)
-    if repeated_inputs.shape[0] < new_size:
-        repeated_inputs = np.concatenate(
-            [repeated_inputs, repeated_inputs[: new_size - repeated_inputs.shape[0]]]
-        )
-    elif repeated_inputs.shape[0] > new_size:
-        repeated_inputs = repeated_inputs[:new_size]
+    try:
+        shuffled_inputs = inputs[indices]
+    except Exception as e:
+        raise TypeError(f"Error shuffling inputs: {e}")
 
     if outputs is not None:
-        assert (
-            len(inputs) == len(outputs)
-        ), "Input and output shapes do not match. Ensure that the number of inputs and outputs are equal."
-        repeated_outputs = np.repeat(outputs, repeats, axis=0)
-        if repeated_outputs.shape[0] < new_size:
-            repeated_outputs = np.concatenate(
-                [repeated_outputs, repeated_outputs[: new_size - repeated_outputs.shape[0]]]
-            )
-        elif repeated_outputs.shape[0] > new_size:
-            repeated_outputs = repeated_outputs[:new_size]
-        indices = np.random.permutation(new_size)
-        return repeated_inputs[indices], repeated_outputs[indices]
-
+        try:
+            shuffled_outputs = outputs[indices]
+        except Exception as e:
+            raise TypeError(f"Error shuffling outputs: {e}")
     else:
-        indices = np.random.permutation(new_size)
-        return repeated_inputs[indices], None
+        shuffled_outputs = None
+
+    return shuffled_inputs, shuffled_outputs
 
 
 def split_datasets(
     inputs: np.ndarray,
     devices: List[int],
-    batch_size: int,
-    outputs: np.ndarray = None,
+    outputs: Optional[np.ndarray] = None,
     include_outputs: bool = False,
-) -> List[Tuple[int, np.ndarray, np.ndarray]]:
-    """Split inputs and outputs into roughly equal parts for each device without truncating data points."""
+) -> List[Tuple[int, np.ndarray, Optional[np.ndarray]]]:
+    """
+    Shuffle and split inputs and outputs into roughly equal parts for each device without truncating data points.
 
+    Args:
+        inputs (np.ndarray): Input data.
+        devices (List[int]): List of device identifiers.
+        batch_size (int): Size of each batch. (Unused in splitting)
+        outputs (Optional[np.ndarray], optional): Output data. Defaults to None.
+        include_outputs (bool, optional): Whether to include outputs in the split. Defaults to False.
+
+    Returns:
+        List[Tuple[int, np.ndarray, Optional[np.ndarray]]]: 
+            A list where each element is a tuple containing:
+            - Device ID
+            - Input subset for the device
+            - Output subset for the device (or None if outputs are not provided)
+    """
     num_devices = len(devices)
-    assert num_devices > 0, "No devices available for training."
-    inputs, outputs = repeat_and_shuffle(inputs, outputs, num_devices, batch_size)
+    if num_devices == 0:
+        raise ValueError("No devices available for training.")
 
-    if outputs is not None:
-        validate_dataset(inputs, outputs)
+    validate_dataset(inputs, outputs)
 
     total_samples = len(inputs)
-
-    if num_devices == 0:
-        raise ValueError("No device available for training.")
-
     samples_per_device = total_samples // num_devices
     remainder = total_samples % num_devices
 
@@ -107,20 +96,21 @@ def split_datasets(
     start_idx = 0
 
     for i, device in enumerate(devices):
+
         current_samples = samples_per_device + (1 if i < remainder else 0)
         end_idx = start_idx + current_samples
-        device_inputs = inputs[start_idx:end_idx]
-        device_outputs = None
+        device_inputs = np.asarray(inputs[start_idx:end_idx])
+        device_outputs = np.asarray(outputs[start_idx:end_idx]) if include_outputs else None
 
-        if include_outputs:
-            device_outputs = outputs[start_idx:end_idx]
         datasets.append(
             (
                 device,
-                np.array(device_inputs),
-                np.array(device_outputs) if include_outputs else None,
+                device_inputs,
+                device_outputs,
             )
         )
         start_idx = end_idx
+
+    assert start_idx == total_samples, "Not all samples were assigned to devices."
 
     return datasets
