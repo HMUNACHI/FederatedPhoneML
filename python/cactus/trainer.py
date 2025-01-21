@@ -27,7 +27,8 @@ class Trainer:
         self.modelJson = get_keras_model_graph(self.model)
         self.device_urls = None
         self.batch_size = batch_size
-        self.worker = Worker(_id=np.random.randint(0, 100000))
+        worker_id = np.random.randint(0, 100000)
+        self.worker = Worker(_id=worker_id)
         self.inputs = np.asarray(inputs)
         self.outputs = np.asarray(outputs)
         self.validation_inputs = validation_inputs

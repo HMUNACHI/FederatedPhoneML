@@ -8,37 +8,28 @@ import { initializeTf } from './TensorflowHandler';
 export const runTraining = async (
   receiveConfig: ReceiveConfig,
 ): Promise<SendConfig> => {
-  try {
-    // Initialize TensorFlow.js environment
-    await initializeTf();
 
-    // Load the model based on the receiveConfig
+  try {
+    await initializeTf();
     const model = await loadModel(receiveConfig);
 
-    // Prepare input and output tensors
+    // Prepare input and output tensors 
     const inputTensor = tf.tensor2d(receiveConfig.inputs, receiveConfig.inputShape);
     const outputTensor = tf.tensor2d(receiveConfig.outputs, receiveConfig.outputShape);
 
-    // Ensure the model is compiled with an optimizer and loss function
     if (!model.optimizer || !model.loss) {
       throw new Error('Model is not compiled. Please ensure the model is loaded and compiled correctly.');
     }
 
     // Extract training configurations
-    const epochs = receiveConfig.epochs;
-    const effectiveBatchSize = receiveConfig.datasetsPerDevice;
-    const microBatchSize = receiveConfig.batchSize;
-
-    // Validate batch sizes
-    if (effectiveBatchSize % microBatchSize !== 0) {
-      throw new Error('Effective batch size must be divisible by micro batch size.');
-    }
+    const effectiveBatchSize = receiveConfig.batchSize;
+    const microBatchSize = 1;
 
     const accumulationSteps = effectiveBatchSize / microBatchSize;
     const numSamples = inputTensor.shape[0];
     const numBatches = Math.ceil(numSamples / microBatchSize);
 
-    let finalLoss = 0; // Initialize final loss
+    let finalLoss = 0; 
 
     // Initialize accumulated gradients as separate tensors
     const accumulatedGradients: tf.NamedTensorMap = {};
@@ -47,12 +38,15 @@ export const runTraining = async (
       accumulatedGradients[weight.name] = tf.zerosLike(weight.read()).clone();
     });
 
-    // Training loop
-    for (let epoch = 1; epoch <= epochs; epoch++) {
-      let epochLoss = 0;
-      let step = 0;
+    // Calculate the number of iterations based on datasetsPerDevice
+    const totalIterations = effectiveBatchSize;
 
-      for (let batch = 0; batch < numBatches; batch++) {
+    let iteration = 0;
+    let epochLoss = 0;
+    let step = 0;
+
+    while (iteration < totalIterations) {
+      for (let batch = 0; batch < numBatches && iteration < totalIterations; batch++, iteration++) {
         const start = batch * microBatchSize;
         const end = Math.min(start + microBatchSize, numSamples);
 
@@ -122,40 +116,40 @@ export const runTraining = async (
         batchInputs.dispose();
         batchOutputs.dispose();
       }
-
-      // Apply remaining gradients if any (when total batches are not perfectly divisible)
-      if (step % accumulationSteps !== 0) {
-        const remainingSteps = step % accumulationSteps;
-
-        // Compute averaged gradients for the remaining steps
-        const averagedGradients: tf.NamedTensorMap = {};
-        model.trainableWeights.forEach(weight => {
-          const weightName = weight.name;
-          averagedGradients[weightName] = tf.div(accumulatedGradients[weightName], remainingSteps);
-        });
-
-        // Apply the averaged gradients
-        (model.optimizer as tf.Optimizer).applyGradients(averagedGradients);
-
-        // Dispose the averaged gradients tensors
-        model.trainableWeights.forEach(weight => {
-          const weightName = weight.name;
-          averagedGradients[weightName].dispose();
-        });
-
-        // Reset accumulated gradients
-        model.trainableWeights.forEach(weight => {
-          const weightName = weight.name;
-          accumulatedGradients[weightName].dispose(); // Dispose previous accumulation
-          accumulatedGradients[weightName] = tf.zerosLike(weight.read()).clone();
-        });
-      }
-
-      // Calculate average loss for the epoch
-      const averageLoss = epochLoss / numSamples;
-      console.log(`Epoch ${epoch}: Loss = ${averageLoss.toFixed(4)}`);
-      finalLoss = averageLoss; // Update final loss
     }
+
+    // Apply remaining gradients if any (when total iterations are not perfectly divisible)
+    if (step % accumulationSteps !== 0) {
+      const remainingSteps = step % accumulationSteps;
+
+      // Compute averaged gradients for the remaining steps
+      const averagedGradients: tf.NamedTensorMap = {};
+      model.trainableWeights.forEach(weight => {
+        const weightName = weight.name;
+        averagedGradients[weightName] = tf.div(accumulatedGradients[weightName], remainingSteps);
+      });
+
+      // Apply the averaged gradients
+      (model.optimizer as tf.Optimizer).applyGradients(averagedGradients);
+
+      // Dispose the averaged gradients tensors
+      model.trainableWeights.forEach(weight => {
+        const weightName = weight.name;
+        averagedGradients[weightName].dispose();
+      });
+
+      // Reset accumulated gradients
+      model.trainableWeights.forEach(weight => {
+        const weightName = weight.name;
+        accumulatedGradients[weightName].dispose(); // Dispose previous accumulation
+        accumulatedGradients[weightName] = tf.zerosLike(weight.read()).clone();
+      });
+    }
+
+    // Calculate average loss for the entire training
+    const averageLoss = epochLoss / numSamples;
+    console.log(`Training Iterations: ${totalIterations}, Loss = ${averageLoss.toFixed(4)}`);
+    finalLoss = averageLoss; // Update final loss
 
     // After training, process SendConfig without model outputs
     const sendConfig: SendConfig = await processSendConfig(model, finalLoss);

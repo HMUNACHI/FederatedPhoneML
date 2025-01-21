@@ -8,18 +8,20 @@ export function createLossFunction(modelJson) {
   if (!loss) {
     throw new Error("Loss function not found in the model JSON.");
   }
+
+  console.log(`Loss function: ${loss}`);
   
   const lossMapping = {
     'mean_squared_error': tf.losses.meanSquaredError,
-    'mean_absolute_error': tf.losses.meanAbsoluteError,
-    'categorical_crossentropy': tf.losses.categoricalCrossentropy,
-    'binary_crossentropy': tf.losses.binaryCrossentropy,
-    'sparse_categorical_crossentropy': tf.losses.sparseCategoricalCrossentropy,
-    'hinge': tf.losses.hinge,
+    'mse': tf.losses.meanSquaredError,
+    'mean_absolute_error': tf.losses.absoluteDifference,
+    'mae': tf.losses.absoluteDifference,
+    'categorical_crossentropy': tf.losses.softmaxCrossEntropy,
+    'binary_crossentropy': tf.losses.sigmoidCrossEntropy,
+    'sparse_categorical_crossentropy': tf.losses.softmaxCrossEntropy,
+    'hinge': tf.losses.hingeLoss,
     'huber_loss': tf.losses.huberLoss,
     'kl_divergence': tf.losses.kullbackLeiblerDivergence,
-    'log_cosh': tf.losses.logCosh,
-    'poisson': tf.losses.poisson,
     'cosine_similarity': tf.losses.cosineDistance,
   };
 

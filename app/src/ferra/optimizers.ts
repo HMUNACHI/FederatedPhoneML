@@ -16,20 +16,20 @@ export function createOptimizer(modelJson) {
   switch (className.toLowerCase()) {
     case 'sgd':
       const sgdLearningRate = config.learning_rate !== undefined ? config.learning_rate : 0.01;
-      const sgdMomentum = config.momentum !== undefined ? config.momentum : 0.0;
+      const sgdMomentum = config.momentum !== undefined ? config.momentum : 0.9; // Added momentum
       optimizer = tf.train.sgd(sgdLearningRate, sgdMomentum);
       break;
 
     case 'adam':
-      const adamLearningRate = config.learning_rate !== undefined ? config.learning_rate : 0.001;
+      const adamLearningRate = config.learning_rate !== undefined ? config.learning_rate : 0.001; // Reduced learning rate
       const adamBeta1 = config.beta_1 !== undefined ? config.beta_1 : 0.9;
       const adamBeta2 = config.beta_2 !== undefined ? config.beta_2 : 0.999;
-      const adamEpsilon = config.epsilon !== undefined ? config.epsilon : 1e-7;
+      const adamEpsilon = config.epsilon !== undefined ? config.epsilon : 1e-8; // Adjusted epsilon
       optimizer = tf.train.adam(adamLearningRate, adamBeta1, adamBeta2, adamEpsilon);
       break;
 
     case 'rmsprop':
-      const rmsLearningRate = config.learning_rate !== undefined ? config.learning_rate : 0.001;
+      const rmsLearningRate = config.learning_rate !== undefined ? config.learning_rate : 0.01;
       const rmsRho = config.rho !== undefined ? config.rho : 0.9;
       const rmsMomentum = config.momentum !== undefined ? config.momentum : 0.0;
       const rmsEpsilon = config.epsilon !== undefined ? config.epsilon : 1e-7;
