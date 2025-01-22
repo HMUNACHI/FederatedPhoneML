@@ -2,7 +2,7 @@ import time
 import numpy as np
 from cactus import Trainer, keras
 
-num_samples = 20000
+num_samples = 40000
 num_features = 10
 hidden_dim = 20
 batch_size = 1
