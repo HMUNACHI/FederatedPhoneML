@@ -2,16 +2,16 @@ import time
 import numpy as np
 from cactus import Trainer, keras
 
-num_samples = 100
-num_features = 1
-num_hidden = 10
+num_samples = 20000
+num_features = 10
+hidden_dim = 20
 batch_size = 1
 epochs = 3
 
 # Define the model
 model = keras.Sequential([
     keras.layers.Input(shape=(num_features,)),
-    keras.layers.Dense(units=num_hidden),
+    keras.layers.Dense(units=hidden_dim),
     keras.layers.Dense(units=num_features),
 ])
 
