@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Cactus",
+    "name": "mfl",
     "icon": "src/assets/images/appstore1024.png",
-    "slug": "Cactus",
+    "slug": "mfl",
     "owner": "rshemet",
     "version": "1.0.0",
     "sdkVersion": "51.0.0",
@@ -19,10 +19,10 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.rshemet.Cactus"
+      "bundleIdentifier": "com.rshemet.mfl"
     },
     "android": {
-      "package": "com.rshemet.Cactus",
+      "package": "com.rshemet.mfl",
       "googleServicesFile": "./google-services.json"
     }
   }

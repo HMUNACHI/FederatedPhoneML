@@ -39,7 +39,7 @@ class ResponseConfig:
 @dataclass
 class Task:
     """
-    A class to manage tasks broadcasted to the Cactus network.
+    A class to manage tasks broadcasted to the mfl network.
     """
 
     request_data: RequestConfig
@@ -110,7 +110,7 @@ class TaskManager:
 
 class Worker:
     """
-    A class to manage the worker's interactions with the Cactus network
+    A class to manage the worker's interactions with the mfl network
     """
 
     def __init__(self, _id: int) -> None:
@@ -122,7 +122,7 @@ class Worker:
         self, device_id: int, request_type: str, request_data: RequestConfig
     ) -> bool:
         """
-        Main method that sends a request to a given Ferra-enabled device
+        Main method that sends a request to a given device
         """
         try:
             response = (

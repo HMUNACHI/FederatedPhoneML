@@ -9,7 +9,7 @@ import { ActivityIndicator } from "react-native-paper";
 import { MainContent } from "../styles/Style";
 import TrainToggle from "./primary/TrainToggle";
 import CustomButton from "./primary/Button";
-import CactusLogo from "../assets/images/logo_light_grey.png"
+import mflLogo from "../assets/images/logo_light_grey.png"
 
 import { joinNetwork, leaveNetwork } from "../communications/Sockets";
 import { handleLogout } from "./Outh";
@@ -47,7 +47,7 @@ const HomePage: React.FC = () => {
     return (
         <MainContent>
             <View>
-            <Image source={CactusLogo} style={{height: 120, width: 120}}/>
+            <Image source={mflLogo} style={{height: 120, width: 120}}/>
             </View>
             {loadingAvailability ? <ActivityIndicator color={theme.colors.primary} size='large'/> : <TrainToggle isTraining={deviceActive} handleTrainToggle={toggleDeviceStatus}/>}
             <Heartbeat deviceActive={deviceActive}/>

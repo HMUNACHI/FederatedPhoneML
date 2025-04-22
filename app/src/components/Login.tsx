@@ -3,7 +3,7 @@ import { handleLogin } from './Outh';
 import SectionBreak from './primary/SectionBreak';
 import Typography from './primary/Typography';
 import { Image } from 'react-native';
-import CactusLogo from "../assets/images/logo_light_grey.png"
+import mflLogo from "../assets/images/logo_light_grey.png"
 import StyledTextInput from './primary/TextField';
 import CustomButton from './primary/Button';
 
@@ -31,7 +31,7 @@ const LoginScreen = ({setLoginInProgress}) => {
 
   return (
     <StyledAuthView>
-      <Image source={CactusLogo} style={{height: 120, width: 120}}/>
+      <Image source={mflLogo} style={{height: 120, width: 120}}/>
       <Typography variant='h2' style={{paddingTop: 30, paddingBottom: 30}}>Sign in</Typography>
       <StyledTextInput
         placeholder="Email"

@@ -3,11 +3,11 @@ from setuptools import find_packages, setup
 setup(
     name="mfl",
     version="0.0.0",
-    author="Cactus Compute",
-    description="A framework for running ML to crowdsourced mobile devices",
+    author="Henry Ndubuaku, Roman Shemet, and James Unsworth",
+    description="A framework for distributing ML to mobile devices",
     long_description=open("./README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://mflcompute.com",
+    url="https://github.com/HMUNACHI",
     packages=find_packages(),
     install_requires=[
         "importlib_resources>=5.9.0",

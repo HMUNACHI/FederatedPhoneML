@@ -1,139 +1,198 @@
+# Mobile Federated Learning
+
 <p align="center">
-  <img src="assets/logo.png" alt="Alt text"/>
+  <img src="assets/logo.png" alt="FederatedPhoneML Logo"/>
 </p>
 
-# Installation
-- Run `cd python`
-- Install the package `pip install -e .`
-- Then run `python test.py` (edit if necessary)
+A mobile-first framework for distributed machine learning on phones, enabling on-device training via federated learning using a Python SDK.
 
-```python
-from mfl import keras, Trainer
+## Table of Contents
 
-model = keras.Sequential([
-    keras.layers.Input(shape=(1,)), 
-    keras.layers.Dense(units=1)   
-])
-model.compile(optimizer='sgd', loss='mean_squared_error')
+1. [Features](#features)
+2. [Prerequisites](#prerequisites)
+3. [Installation](#installation)
+   - [Python SDK](#python-sdk)
+   - [Mobile App (Expo)](#mobile-app-expo)
+4. [Usage](#usage)
+   - [Python SDK](#python-sdk-usage)
+   - [React Native App](#react-native-app-usage)
+5. [API Reference](#api-reference)
+   - [ReceiveConfig](#receiveconfig)
+   - [SendConfig](#sendconfig)
+6. [Technical Considerations](#technical-considerations)
+7. [Performance Notes](#performance-notes)
+8. [Contributing](#contributing)
+9. [License](#license)
 
-# Only additional code needed
-trainer = Trainer(
-    model, inputs, outputs,
-    batch_size=2,
-)
-trainer.fit(epochs=10)
-```
+## Features
 
+- Distributed federated training with gradient accumulation
+- Memory-efficient batch processing
+- Real-time model evaluation and inference on mobile
+- Automatic resource management and tensor cleanup
+- Comprehensive error handling and fallback support
 
+## Prerequisites
+
+- Node.js (>= 14.x)
+- Yarn (>= 1.x)
+- Python (>= 3.7)
+- expo-cli (for React Native)
+- CocoaPods (for iOS dependencies)
 
 ## Installation
 
-1. Clone the repository
-2. Install dependencies:
-```bash
-yarn
-```
-3. Spin up the app on Expo
-```bash
-yarn start
-```
+### Python SDK
 
-### iOS Setup
+1. Navigate to the SDK folder:
+   ```bash
+   cd python
+   ```
+2. Install in editable mode:
+   ```bash
+   pip install -e .
+   ```
+
+### Mobile App (Expo)
+
+1. Install dependencies:
+   ```bash
+   yarn
+   ```
+2. Start the Expo development server:
+   ```bash
+   yarn start
+   ```
+
+#### iOS Setup
+
 ```bash
 cd ios
 pod install
 cd ..
-yarn 
-yarn start 
+yarn
+yarn start
 i
 ```
 
-### Android Setup
-No additional steps required after npm install.
+#### Android Setup
 
-## Running the App
-
-### Spin-up on Expo
 ```bash
-yarn start 
-```
-
-### iOS
-```bash
-i
-```
-
-### Android
-```bash
+yarn start
 a
 ```
 
-## Ferra Features
+## Usage
 
-- Distributed ML training with gradient accumulation, via Federation
-- Memory-efficient batch processing
-- Real-time model evaluation
-- Mobile-optimized inference
-- Automatic resource management
-- Comprehensive error handling
+### Python SDK Usage
 
-## How to use Ferra
-```typescript
-import {isAvailable, train, evaluate, predict} from './ferra';
+```python
+from mfl import keras, Trainer
 
-const sendConfig = await train(recieveConfig);
+# Define a simple model
+model = keras.Sequential([
+  keras.layers.Input(shape=(1,)),
+  keras.layers.Dense(units=1)
+])
+model.compile(optimizer='sgd', loss='mean_squared_error')
 
-const sendConfig = await evaluate(recieveConfig);
+# Prepare training data
+inputs = [[...]]
+outputs = [[...]]
 
-const sendConfig = await predict(recieveConfig); 
+# Initialize federated Trainer
+trainer = Trainer(
+  model,
+  inputs,
+  outputs,
+  batch_size=2
+)
 
-const isAvailable = await isAvailable(); // returns true or false
+# Train for 10 epochs
+trainer.fit(epochs=10)
 ```
 
-### Configuration Types
-These are JSONs Cactus APP recieves from Cactus Library,and what it returns.
-Just use ferra as shown above, do not modify the codes.
+### React Native App Usage
 
-#### ReceiveConfig
 ```typescript
-interface ReceiveConfig {
-  modelJson: string;                 // Model URL
-  weights: [shardFileName: string]; // Model weights
-  batchSize: number;                // Micro-batch size
-  inputs: number[][];               // Input data
-  inputShape: number[];             // Input tensor shape
-  outputs?: number[][];             // Output data
-  outputShape?: number[];           // Output tensor shape
-  epochs?: number;                  // Training epochs
-  datasetsPerDevice?: number;       // Device batch size
+import { isAvailable, train, evaluate, predict } from './ml';
+
+// Example training call
+type ReceiveConfig = {
+  modelJson: string;
+  weights: string[];
+  batchSize: number;
+  inputs: number[][];
+  inputShape: number[];
+  outputs?: number[][];
+  outputShape?: number[];
+  epochs?: number;
+};
+
+async function runFederatedTraining(config: ReceiveConfig) {
+  if (await isAvailable()) {
+    const sendConfig = await train(config);
+    console.log('Updated weights:', sendConfig.weights);
+    console.log('Loss:', sendConfig.loss);
+  } else {
+    console.warn('Federated learning not available on this device.');
+  }
 }
 ```
 
-#### SendConfig
+## API Reference
+
+### ReceiveConfig
+
+```typescript
+interface ReceiveConfig {
+  modelJson: string;       // URL to the model JSON manifest
+  weights: string[];       // Array of weight shard file names
+  batchSize: number;       // Micro-batch size for local training
+  inputs: number[][];      // Local input data array
+  inputShape: number[];    // Shape of the input tensor
+  outputs?: number[][];    // Local output data (for training/evaluation)
+  outputShape?: number[];  // Shape of the output tensor
+  epochs?: number;         // Number of local training epochs
+  datasetsPerDevice?: number; // Number of batches per device
+}
+```
+
+### SendConfig
+
 ```typescript
 interface SendConfig {
-  weights: Float32Array[];      // Updated weights
-  outputs?: Float32Array[];     // Predictions
-  loss: number;                 // Loss value
+  weights: Float32Array[]; // Updated model weights after operation
+  outputs?: Float32Array[]; // Predictions (for evaluate/predict)
+  loss: number;           // Loss value after training
 }
 ```
 
 ## Technical Considerations
 
-### Memory Management
-- Automatic tensor disposal
-- Batch-wise data processing
-- Mobile-optimized resource handling
-- Automatic cleanup on errors
+- **Automatic Tensor Disposal:** Prevents memory leaks by disposing of unused tensors.
+- **Batch-wise Processing:** Optimizes memory usage on resource-constrained devices.
+- **Error Handling:** Graceful cleanup and retry strategies on failures.
+- **Background Limits:** Adheres to mobile OS restrictions for background tasks.
+- **Network Optimization:** Minimizes bandwidth usage during federated communication.
 
-### Mobile-Specific Considerations
-- Limited device memory
-- Battery consumption awareness
-- Background processing limitations
-- Network bandwidth optimization
+## Performance Notes
 
-### Performance Notes
-- WebGL performance varies by device
-- Model size impacts load time
-- Battery usage during training
-- Network latency handling
+- WebGL performance and model size can impact load/inference times.
+- Battery consumption rises during on-device training; monitor usage.
+- Network latency affects federated rounds; consider compression.
+- iOS and Android hardware differences may yield variable performance.
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/my-feature`.
+3. Implement your changes and commit.
+4. Push to your fork: `git push origin feature/my-feature`.
+5. Open a pull request describing your changes.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

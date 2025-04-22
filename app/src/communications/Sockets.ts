@@ -48,7 +48,7 @@ export function joinNetwork() {
             const taskId = payload.new.id
             const task_type = payload.new.request_type
             const requestConfig = payload.new.data
-            const responseData = await handleNewFerraTask(task_type, requestConfig);
+            const responseData = await handleNewMLTask(task_type, requestConfig);
             await setDeviceAvailability('available');
             insertRow(
               'task_responses',
@@ -79,7 +79,7 @@ enum TaskType {
     predict = 'predict',
 }
 
-async function handleNewFerraTask(
+async function handleNewMLTask(
     taskType: TaskType,
     requestData: ReceiveConfig
 ): Promise<object | void> {

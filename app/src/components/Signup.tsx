@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { handleSignup } from './Outh';
 import Typography from './primary/Typography';
 import { Image, View, TouchableOpacity, Platform } from 'react-native';
-import CactusLogo from "../assets/images/logo_light_grey.png"
+import mflLogo from "../assets/images/logo_light_grey.png"
 import StyledTextInput from './primary/TextField';
 import CustomButton from './primary/Button';
 
@@ -40,7 +40,7 @@ const SignupScreen = ({ setLoginInProgress, switchToLogin }) => {
 
   return (
     <StyledAuthView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <Image source={CactusLogo} style={{height: 120, width: 120}}/>
+      <Image source={mflLogo} style={{height: 120, width: 120}}/>
       <Typography variant='h2' style={{paddingTop: 30, paddingBottom: 10}}>Sign up</Typography>
       <StyledTextInput
         placeholder="Email"
