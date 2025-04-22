@@ -1,13 +1,13 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="cactus",
+    name="mfl",
     version="0.0.0",
     author="Cactus Compute",
     description="A framework for running ML to crowdsourced mobile devices",
     long_description=open("./README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://cactuscompute.com",
+    url="https://mflcompute.com",
     packages=find_packages(),
     install_requires=[
         "importlib_resources>=5.9.0",

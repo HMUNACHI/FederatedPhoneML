@@ -1,6 +1,6 @@
 import { supabase, insertRow, setDeviceAvailability } from "./Supabase";
-import {isAvailable, train, evaluate, predict} from '../ferra'
-import { ReceiveConfig } from "../ferra/Config";
+import {isAvailable, train, evaluate, predict} from '../ml'
+import { ReceiveConfig } from "../ml/Config";
 
 import { getCurrentDeviceID } from "../utils/CurrentDevice";
 

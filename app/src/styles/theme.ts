@@ -11,7 +11,7 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#DDFF00', // cactus neon
+    primary: '#DDFF00', // mfl neon
     background: '#0D0D0D', // default black on the main page
     success: '#7BEA6D', // green color similar to the one on the chart
     surface: '#161616', // dark color for cards
