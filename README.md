@@ -8,22 +8,62 @@ A mobile-first framework for distributed machine learning on phones, enabling on
 
 ## Table of Contents
 
-1. [Features](#features)
-2. [Prerequisites](#prerequisites)
-3. [Installation](#installation)
+1. [Technical Design, Benefits, and Limitations](#technical-design-benefits-and-limitations)
+2. [Features](#features)
+3. [Prerequisites](#prerequisites)
+4. [Installation](#installation)
    - [Supabase Setup](#supabase-setup)
    - [Python SDK](#python-sdk)
    - [Mobile App (Expo)](#mobile-app-expo)
-4. [Usage](#usage)
+5. [Usage](#usage)
    - [Python SDK](#python-sdk-usage)
    - [React Native App](#react-native-app-usage)
-5. [API Reference](#api-reference)
+6. [API Reference](#api-reference)
    - [ReceiveConfig](#receiveconfig)
    - [SendConfig](#sendconfig)
-6. [Technical Considerations](#technical-considerations)
-7. [Performance Notes](#performance-notes)
-8. [Contributing](#contributing)
-9. [License](#license)
+7. [Technical Considerations](#technical-considerations)
+8. [Performance Notes](#performance-notes)
+9. [Contributing](#contributing)
+10. [License](#license)
+
+## Technical Design, Benefits, and Limitations
+
+### Core Design
+
+FederatedPhoneML is a distributed machine learning framework enabling on-device training via federated learning on mobile phones. The architecture consists of:
+
+1. **Python SDK**: Server-side coordination layer using Keras for model definition
+2. **Mobile Client**: React Native app with TensorFlow.js that executes training locally
+3. **Coordination Backend**: Supabase for task distribution and weight aggregation
+
+Training occurs directly on users' devices rather than centralizing data collection. The system sends model architecture and initial weights to phones, which perform local training iterations on device-specific data, then return only the updated weights.
+
+### Technical Benefits
+
+1. **Data Privacy**: Raw training data never leaves user devices; only model weight updates are transmitted
+2. **Bandwidth Efficiency**: Transmitting model weights requires significantly less bandwidth than raw data transfer
+3. **Distributed Computation**: Leverages computational resources across many devices rather than centralized servers
+4. **Heterogeneous Data Utilization**: Captures diverse training signals from varied user environments and behaviors
+5. **Battery-Aware Processing**: Implements batch-wise processing to manage memory constraints on mobile devices
+
+### Technical Limitations
+
+1. **Resource Constraints**: Mobile devices have limited RAM and computational power, restricting model complexity
+2. **Battery Consumption**: On-device training significantly increases energy usage, requiring careful optimization
+3. **Training Latency**: Federation rounds are limited by slowest devices and network conditions
+4. **Model Size Limitations**: TensorFlow.js imposes practical limits on model architecture complexity
+5. **Heterogeneous Performance**: Training behavior varies across device hardware, potentially introducing bias
+6. **WebGL Limitations**: Backend acceleration varies significantly across mobile GPUs
+7. **Synchronization Challenges**: Coordination of model versions across devices with intermittent connectivity
+8. **Security Vulnerabilities**: Weight updates can potentially leak information about training data
+
+### Implementation Constraints
+
+1. Limited to Keras/TensorFlow models with specific serialization requirements
+2. TensorFlow.js performance varies significantly across browsers and devices
+3. Tensor cleanup requires explicit memory management to prevent leaks
+4. No differential privacy implementation yet to fully protect against inference attacks
+5. Limited support for asynchronous federated learning when devices have variable availability
 
 ## Features
 
