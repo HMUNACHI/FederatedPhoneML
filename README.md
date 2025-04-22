@@ -11,6 +11,7 @@ A mobile-first framework for distributed machine learning on phones, enabling on
 1. [Features](#features)
 2. [Prerequisites](#prerequisites)
 3. [Installation](#installation)
+   - [Supabase Setup](#supabase-setup)
    - [Python SDK](#python-sdk)
    - [Mobile App (Expo)](#mobile-app-expo)
 4. [Usage](#usage)
@@ -39,16 +40,53 @@ A mobile-first framework for distributed machine learning on phones, enabling on
 - Python (>= 3.7)
 - expo-cli (for React Native)
 - CocoaPods (for iOS dependencies)
+- [Supabase](https://supabase.com) account (for backend services)
 
 ## Installation
+
+### Supabase Setup
+
+1. Create a new Supabase project at [supabase.com](https://supabase.com)
+2. Get your project URL and anon key from Settings → API
+3. Create a `.env` file in the app root with:
+   ```bash
+   EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
+4. Create these tables in your Supabase database:
+   ```sql
+   -- Devices table
+   CREATE TABLE devices (
+     id SERIAL PRIMARY KEY,
+     user_id UUID REFERENCES auth.users NOT NULL,
+     status VARCHAR(20) NOT NULL,
+     last_updated TIMESTAMPTZ
+   );
+
+   -- Task Requests table
+   CREATE TABLE task_requests (
+     id SERIAL PRIMARY KEY,
+     device_id INTEGER REFERENCES devices(id) NOT NULL,
+     request_type VARCHAR(20) NOT NULL,
+     data JSONB NOT NULL,
+     created_at TIMESTAMPTZ DEFAULT NOW()
+   );
+
+   -- Task Responses table
+   CREATE TABLE task_responses (
+     id SERIAL PRIMARY KEY,
+     task_id INTEGER REFERENCES task_requests(id) NOT NULL,
+     data JSONB NOT NULL,
+     created_at TIMESTAMPTZ DEFAULT NOW()
+   );
+   ```
 
 ### Python SDK
 
 1. Navigate to the SDK folder:
    ```bash
    cd python
-   ```
-2. Install in editable mode:
+   ```2. Install in editable mode:
    ```bash
    pip install -e .
    ```
